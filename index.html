@@ -374,7 +374,7 @@
           <label>学习状态<select id="dishLearningStatus"><option value="want">还没学</option><option value="practice">正在练习</option><option value="done">我学会啦</option></select></label>
           <button id="toggleDishFavorite" type="button"><span>♡</span> 她的最爱</button>
         </div>
-        <div class="recipe-columns">
+        <div class="dish-source-row" id="dishSourceRow" hidden><span>灵感来源</span><a id="dishSourceLink" target="_blank" rel="noopener noreferrer">打开原帖 ↗</a></div>        <div class="recipe-columns">
           <div><h3>需要的食材</h3><ul id="dishModalIngredients"></ul></div>
           <div><h3>一起做</h3><ol id="dishModalSteps"></ol></div>
         </div>
@@ -411,6 +411,17 @@
             <small>照片会自动压缩，只保存在当前浏览器。</small>
           </div>
           <div class="editor-fields">
+            <section class="recipe-importer" id="recipeImporter">
+              <div class="recipe-importer-head"><div><span>智能导入</span><small>抖音 / 小红书</small></div><b>LINK IMPORT</b></div>
+              <textarea id="recipeImportText" rows="4" placeholder="粘贴分享文案、菜品链接，或详情页里包含“食材 / 做法”的整段文字。&#10;&#10;抖音和小红书的链接受平台限制，建议同时粘贴分享文案或页面文字。"></textarea>
+              <div class="recipe-importer-actions">
+                <button id="importRecipe" type="button">识别并填入</button>
+                <button id="openRecipeSource" type="button" hidden>打开原链接 ↗</button>
+                <span id="recipeImportStatus" role="status">等待粘贴内容</span>
+              </div>
+              <input id="dishSourceUrl" type="hidden" />
+              <input id="dishSourcePlatform" type="hidden" />
+            </section>
             <div class="form-grid">
               <label class="field field-wide">菜名<input id="dishName" name="name" maxlength="30" placeholder="例如：她最爱的番茄牛腩" required /></label>
               <label class="field">分类<select id="dishCategory" name="category"><option>前菜</option><option>主菜</option><option>主食</option><option>甜点</option><option>饮品</option><option>小吃</option></select></label>

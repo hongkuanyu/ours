@@ -417,6 +417,11 @@
     $('#dishEditorIngredients').value = (dish?.ingredients || []).join('\n');
     $('#dishEditorSteps').value = (dish?.steps || []).join('\n');
     $('#dishImagePreview').src = dish?.image || 'assets/dish-custom.svg';
+    $('#dishSourceUrl').value = dish?.sourceUrl || '';
+    $('#dishSourcePlatform').value = dish?.sourcePlatform || '';
+    $('#recipeImportText').value = '';
+    $('#recipeImportStatus').textContent = dish?.sourceUrl ? `已保存来源：${dish.sourcePlatform || '外部链接'}` : '等待粘贴内容';
+    $('#openRecipeSource').hidden = !dish?.sourceUrl;
     $('#dishImage').value = '';
     const deleteButton = $('#deleteCustomDish');
     deleteButton.hidden = !dish;
@@ -491,6 +496,8 @@
       flavor: $('#dishFlavor').value.trim() || '我们的味道',
       badge: '我们的菜谱',
       desc: $('#dishDesc').value.trim() || '这是我们自己写进菜单里的一道菜。',
+      sourceUrl: $('#dishSourceUrl').value.trim(),
+      sourcePlatform: $('#dishSourcePlatform').value.trim(),
       ingredients,
       steps,
       custom: true,

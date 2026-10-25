@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ours-supper-v5';
+const CACHE_NAME = 'ours-supper-v6';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './config.js',
   './manifest.webmanifest', './menu-extra.js', './store.js', './features.js', './assets/icon.svg', './assets/icon-192.png', './assets/icon-512.png',

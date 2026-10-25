@@ -1000,4 +1000,138 @@
   } else {
     initFeatures();
   }
-})();
+})();  const regexOr = String.fromCharCode(124);
+  const recipeNoise = new RegExp(['复制打开', '打开抖音', '打开小红书', '小红书号', '抖音号', '点赞', '收藏', '评论', '转发', '分享', '相关推荐', '广告', '下载APP', '打开APP', '作者', '发布时间', '视频原声', '图文', '展开'].join(regexOr));
+  const ingredientWords = ['食材', '用料', '配料', '原材料', '准备材料', '所需材料', '材料'];
+  const stepWords = ['做法', '步骤', '制作步骤', '烹饪步骤', '烹饪方法', '制作方法', '教程'];
+  const endWords = ['小贴士', '提示', '注意', '备注', '标签', 'Tips', '#'];
+  function startsWithAny(line, words) { return words.some((word) => line.startsWith(word)); }
+  function extractRecipeUrl(text) { const match = String(text).match(/https?:\/\/[^\s，。！？]+/i); return match ? match[0].replace(/[)\]}>，。！？]+$/g, "") : ""; }
+  function isSafeHttpUrl(value) { try { const url = new URL(value); return ["http:", "https:"].includes(url.protocol); } catch { return false; } }
+  function recipePlatform(url) { const lower = String(url).toLowerCase(); if (lower.includes("douyin.com")) return "抖音"; if (lower.includes("iesdouyin.com")) return "抖音"; if (lower.includes("xiaohongshu.com")) return "小红书"; if (lower.includes("xhslink.com")) return "小红书"; return url ? "外部链接" : ""; }
+  function cleanRecipeLine(line) { return String(line).replace(/^[\s>#*+\-•·]+/, "").replace(/^\d+[.、)]\s*/, "").replace(/#[^\s#]+/g, "").replace(/\s+/g, " ").trim(); }
+  function guessRecipeTitle(text, url) {
+    const withoutUrl = String(text).replace(url, '').replace(/\s+/g, ' ').trim();
+    const brackets = [...withoutUrl.matchAll(/【([^】]{2,80})】/g)].map((match) => cleanRecipeLine(match[1]));
+    const goodBracket = brackets.find((value) => value.length >= 3 && !/的作品|的笔记|发布了/.test(value));
+    if (goodBracket) return goodBracket;
+    const lines = withoutUrl.split(/[\r\n]+/).map(cleanRecipeLine).filter(Boolean);
+    const candidates = lines.filter((line) => line.length >= 3 && line.length <= 70 && !recipeNoise.test(line) && !startsWithAny(line, ingredientWords) && !startsWithAny(line, stepWords));
+    candidates.sort((a, b) => b.length - a.length);
+    return candidates[0] ? candidates[0] : '';
+  }
+  function guessRecipeCategory(text) {
+    if (['蛋糕', '布丁', '甜点', '冰淇淋', '奶油', '焦糖', '巴斯克', '饼干', '派'].some((word) => text.includes(word))) return '甜点';
+    if (['饮', '茶', '咖啡', '果汁', '气泡', '鸡尾酒', '红酒', '奶昔'].some((word) => text.includes(word))) return '饮品';
+    if (['面条', '米饭', '粥', '粉', '饺子', '馒头', '包子', '意面', '烩饭'].some((word) => text.includes(word))) return '主食';
+    if (['小吃', '薯', '炸', '烤串', '沙拉', '下酒', '零食'].some((word) => text.includes(word))) return '小吃';
+    if (['汤', '前菜', '开胃', '凉拌'].some((word) => text.includes(word))) return '前菜';
+    return '主菜';
+  }
+  function guessRecipeTime(text) {
+    const minutes = text.match(/(\d{1,3})\s*分钟/);
+    if (minutes) return minutes[1] + ' MIN';
+    const mins = text.match(/(\d{1,3})\s*min/i);
+    if (mins) return mins[1] + ' MIN';
+    const hours = text.match(/(\d{1,2})\s*小时/);
+    if (hours) return hours[1] + ' HR';
+    return '';
+  }
+  function parseRecipeSections(text) {
+    const rawLines = String(text).replace(/\r/g, '').split('\n').map((line) => line.trim()).filter(Boolean);
+    const ingredients = [];
+    const steps = [];
+    let mode = '';
+    rawLines.forEach((line) => {
+      const clean = cleanRecipeLine(line);
+      if (!clean) return;
+      if (startsWithAny(clean, ingredientWords)) {
+        mode = 'ingredient';
+        const word = ingredientWords.find((entry) => clean.startsWith(entry));
+        const rest = clean.slice(word.length).replace(/^[:：\s]+/, '').trim();
+        if (rest.length > 1) ingredients.push(rest);
+        return;
+      }
+      if (startsWithAny(clean, stepWords)) {
+        mode = 'step';
+        const word = stepWords.find((entry) => clean.startsWith(entry));
+        const rest = clean.slice(word.length).replace(/^[:：\s]+/, '').trim();
+        if (rest.length > 1) steps.push(rest);
+        return;
+      }
+      if (startsWithAny(clean, endWords)) { mode = ''; return; }
+      if (mode === 'ingredient' && clean.length <= 90 && !recipeNoise.test(clean)) ingredients.push(clean);
+      if (mode === 'step' && clean.length >= 3 && !recipeNoise.test(clean)) steps.push(clean);
+    });
+    if (!ingredients.length) {
+      rawLines.forEach((line) => {
+        if (/(\d+(?:\.\d+)?\s*(?:g|kg|ml|l|克|千克|毫升|勺|茶匙|杯|个|颗|片|根|瓣|块|只|斤|两))/.test(line)) ingredients.push(cleanRecipeLine(line));
+      });
+    }
+    if (!steps.length) {
+      rawLines.forEach((line) => {
+        if (/^\s*\d+[.、)]\s+/.test(line)) steps.push(cleanRecipeLine(line));
+      });
+    }
+    return { ingredients: [...new Set(ingredients)].slice(0, 30), steps: [...new Set(steps)].slice(0, 30) };
+  }
+  function importRecipeText() {
+    const input = document.getElementById('recipeImportText');
+    const status = document.getElementById('recipeImportStatus');
+    const raw = input.value.trim();
+    if (!raw) { status.textContent = '先粘贴链接、分享文案或页面文字。'; return; }
+    const url = extractRecipeUrl(raw);
+    const platform = recipePlatform(url);
+    const title = guessRecipeTitle(raw, url);
+    const sections = parseRecipeSections(raw);
+    const time = guessRecipeTime(raw);
+    const safeUrl = isSafeHttpUrl(url) ? url : '';
+    document.getElementById('dishSourceUrl').value = safeUrl;
+    document.getElementById('dishSourcePlatform').value = platform;
+    const sourceButton = document.getElementById('openRecipeSource');
+    sourceButton.hidden = !safeUrl;
+    if (title) document.getElementById('dishName').value = title;
+    if (sections.ingredients.length) document.getElementById('dishEditorIngredients').value = sections.ingredients.join('\n');
+    if (sections.steps.length) document.getElementById('dishEditorSteps').value = sections.steps.join('\n');
+    if (time) document.getElementById('dishTime').value = time;
+    const category = guessRecipeCategory(raw);
+    document.getElementById('dishCategory').value = category;
+    if (title) document.getElementById('dishDesc').value = `来自${platform || '外部链接'}的菜谱灵感：${title}`;
+    if (!title && !sections.ingredients.length && !sections.steps.length) {
+      status.textContent = safeUrl ? `已识别${platform}链接。平台限制无法直接读取正文，请把详情页文字一起粘贴。` : '没有识别到可用的菜品信息。';
+      return;
+    }
+    status.textContent = `已填入：${title ? '菜名' : ''} ${sections.ingredients.length} 种食材 · ${sections.steps.length} 个步骤`;
+  }
+  function renderDishSource(id) {
+    const row = document.getElementById('dishSourceRow');
+    const link = document.getElementById('dishSourceLink');
+    const dish = window.OURS_APP?.getAllDishes?.().find((item) => item.id === id);
+    if (!row) return;
+    if (!link) return;
+    if (!dish?.sourceUrl) { row.hidden = true; return; }
+    row.hidden = false;
+    row.querySelector('span').textContent = `灵感来源：${dish.sourcePlatform ? dish.sourcePlatform : '外部链接'}`;
+    link.href = isSafeHttpUrl(dish.sourceUrl) ? dish.sourceUrl : '#';
+    link.textContent = '打开原帖 ↗';
+  }
+  function initRecipeImporter() {
+    const importButton = document.getElementById('importRecipe');
+    const importInput = document.getElementById('recipeImportText');
+    const sourceButton = document.getElementById('openRecipeSource');
+    if (!importButton) return;
+    if (!importInput) return;
+    if (!sourceButton) return;
+    importButton.addEventListener('click', importRecipeText);
+    importInput.addEventListener('paste', () => window.setTimeout(importRecipeText, 80));
+    sourceButton.addEventListener('click', () => {
+      const url = document.getElementById('dishSourceUrl').value;
+      if (isSafeHttpUrl(url)) window.open(url, '_blank', 'noopener,noreferrer');
+    });
+    document.addEventListener('ours:dish-opened', (event) => renderDishSource(event.detail.id));
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRecipeImporter, { once: true });
+  } else {
+    initRecipeImporter();
+  }

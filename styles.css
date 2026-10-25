@@ -2517,3 +2517,41 @@ body::after {
   color: var(--cream);
 }
 .quiz-dialog .quiz-options button { color: var(--cream-soft); }.cook-toolbar-actions { display: flex; align-items: center; gap: 10px; }
+.recipe-importer {
+  margin-bottom: 22px;
+  padding: 16px;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, .025);
+}
+.recipe-importer-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 11px; }
+.recipe-importer-head div { display: flex; align-items: baseline; gap: 9px; }
+.recipe-importer-head span { color: var(--gold); font-family: var(--serif); font-size: 20px; }
+.recipe-importer-head small { color: var(--muted); font-size: 9px; letter-spacing: .08em; }
+.recipe-importer-head b { color: var(--muted); font-size: 7px; font-weight: 400; letter-spacing: .14em; }
+.recipe-importer textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  color: var(--cream);
+  background: rgba(0, 0, 0, .18);
+  font-size: 11px;
+  line-height: 1.65;
+  resize: vertical;
+  outline: 0;
+}
+.recipe-importer textarea:focus { border-color: var(--gold); }
+.recipe-importer textarea::placeholder { color: rgba(244, 235, 226, .27); }
+.recipe-importer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 10px; }
+.recipe-importer-actions button { min-height: 38px; padding: 7px 12px; border: 1px solid var(--line); color: var(--cream-soft); background: transparent; font-size: 10px; }
+.recipe-importer-actions button:first-child { color: var(--ink); border-color: var(--gold); background: var(--gold); }
+.recipe-importer-actions button:hover { border-color: var(--cream); }
+.recipe-importer-actions span { flex: 1; min-width: 140px; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.recipe-importer.is-importing button:first-child { opacity: .65; pointer-events: none; }
+.dish-source-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 10px 12px; border-left: 2px solid var(--gold); background: rgba(208, 173, 118, .06); }
+.dish-source-row span { color: var(--muted); font-size: 9px; letter-spacing: .08em; }
+.dish-source-row a { color: var(--gold); font-size: 10px; }
+
+@media (max-width: 600px) {
+  .recipe-importer-head b { display: none; }
+  .recipe-importer-actions span { flex-basis: 100%; min-width: 0; }
+}
