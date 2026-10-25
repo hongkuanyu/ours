@@ -1,0 +1,141 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#101326" />
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="description" content="只属于我们的私人宇宙。" />
+  <title>OURS — 只属于我们的宇宙</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="starfield" aria-hidden="true"></canvas>
+  <header class="top-nav">
+    <a class="brand" href="#home">OURS</a>
+    <nav class="desktop-nav" aria-label="主导航">
+      <a href="#home">宇宙</a>
+      <a href="#memories">回忆</a>
+      <a href="#wishes">愿望</a>
+      <a href="#play">游戏</a>
+      <a href="#vault">暗号</a>
+    </nav>
+    <span class="nav-note">仅属于我们</span>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="planet" aria-hidden="true">
+        <span class="planet-ring ring-one"></span>
+        <span class="planet-ring ring-two"></span>
+      </div>
+      <div class="hero-copy">
+        <p class="eyebrow">A private universe / 只属于两个人</p>
+        <h1>宇宙很大，<br />而我只偏爱你。</h1>
+        <p class="hero-subtitle">在无数颗星星之中，我们恰好遇见。<br />这里替我们记住那些不愿遗失的细节。</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#memories">进入我们的宇宙 <span>→</span></a>
+          <button class="button ghost" id="heartButton" type="button">今天也很喜欢你 <span id="heartCount">0</span></button>
+        </div>
+        <div class="hero-meta">
+          <span id="togetherDays">DAY —</span>
+          <span id="todayLabel">TODAY</span>
+        </div>
+      </div>
+      <p class="scroll-hint">向下，回到我们的时间</p>
+    </section>
+
+    <section class="section time-section" id="time">
+      <div class="section-head">
+        <p class="eyebrow">Time we share</p>
+        <h2>我们在一起的时间，<br />正在形成一条星轨。</h2>
+      </div>
+      <div class="time-grid">
+        <article class="time-card">
+          <span>在一起</span>
+          <strong id="daysNumber">—</strong>
+          <small>天</small>
+          <p>从 <span id="startDateLabel">我们的开始日期</span> 起。</p>
+        </article>
+        <article class="time-card birthday-card">
+          <span>距离她的生日</span>
+          <strong id="birthdayDays">—</strong>
+          <small>天</small>
+          <p id="birthdayDateLabel">把生日写进 config.js</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="memories">
+      <div class="section-head split-head">
+        <div><p class="eyebrow">Memory nebula</p><h2>回忆不是列表，<br />是我们走过的时间。</h2></div>
+        <p>照片、地点、天气，以及当时没有说出口的那句话。当前使用占位照片，替换 assets 里的图片即可。</p>
+      </div>
+      <div class="memory-grid" id="memoryGrid"></div>
+    </section>
+
+    <section class="section wish-section" id="wishes">
+      <div class="section-head split-head">
+        <div><p class="eyebrow">Wish galaxy</p><h2>把想一起做的事，<br />放进星海。</h2></div>
+        <p>愿望保存在当前浏览器里。不需要账号，也没有服务器。</p>
+      </div>
+      <div class="wish-layout">
+        <div class="wish-panel">
+          <div class="wish-progress"><span id="wishProgress">0 / 0</span><i><b id="wishBar"></b></i></div>
+          <div class="wish-list" id="wishList"></div>
+          <form class="wish-form" id="wishForm">
+            <label for="wishInput">想一起完成的事</label>
+            <div><input id="wishInput" maxlength="80" placeholder="例如：一起去看一次海" required /><button class="button small" type="submit">放进星海</button></div>
+          </form>
+        </div>
+        <aside class="wish-aside"><span>✦</span><p>每完成一个愿望，就会有一颗星被点亮。</p></aside>
+      </div>
+    </section>
+
+    <section class="section" id="play">
+      <div class="section-head split-head">
+        <div><p class="eyebrow">Couple Lab</p><h2>把散落的记忆，<br />重新找回来。</h2></div>
+        <p>找到成对的卡片。每次翻开都会出现一张属于我们的符号。</p>
+      </div>
+      <div class="game-shell">
+        <div class="game-status"><span id="gameMoves">0 步</span><span id="gamePairs">0 / 6 对</span><button class="button ghost" id="restartGame" type="button">重新开始</button></div>
+        <div class="game-grid" id="gameGrid" aria-label="回忆翻牌游戏"></div>
+        <p class="game-result" id="gameResult" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="section vault-section" id="vault">
+      <div class="vault-copy">
+        <p class="eyebrow">For Us</p>
+        <h2>还有一页，<br />只有我们知道暗号。</h2>
+        <p>输入暗号，打开藏在宇宙背面的那封信。无账号版本使用客户端解密；它不是银行级安全，请不要放高风险隐私。</p>
+        <form id="vaultForm" class="vault-form">
+          <label for="passphrase">我们的暗号</label>
+          <div><input id="passphrase" type="password" autocomplete="current-password" placeholder="只有我们知道" required /><button class="button primary" type="submit">打开</button></div>
+          <small>提示：我们的第一个纪念日，或者那串熟悉的数字。</small>
+          <p id="vaultError" class="error" role="alert"></p>
+        </form>
+      </div>
+      <div class="vault-letter" id="vaultLetter" hidden>
+        <span class="eyebrow">A letter for us</span>
+        <h3>亲爱的你：</h3>
+        <p id="vaultContent"></p>
+        <p class="signature">永远站在你这边的我</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>OURS / OUR LITTLE UNIVERSE</span>
+    <span>Built for two. Made with time.</span>
+  </footer>
+
+  <nav class="mobile-nav" aria-label="移动端导航">
+    <a href="#home">宇宙</a><a href="#memories">回忆</a><a href="#wishes">愿望</a><a href="#play">游戏</a><a href="#vault">暗号</a>
+  </nav>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
