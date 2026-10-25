@@ -1,16 +1,16 @@
 {
-  "name": "OURS 私人餐厅",
+  "name": "OURS — A Little World for Two",
   "short_name": "OURS",
-  "description": "一间只开给两个人的私人餐厅。",
+  "description": "记录两个人的回忆、愿望和一间只为我们营业的私人餐厅。",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#090a08",
-  "theme_color": "#090a08",
+  "background_color": "#FAF6F0",
+  "theme_color": "#FAF6F0",
   "lang": "zh-CN",
-  "categories": ["lifestyle", "food"],
+  "categories": ["lifestyle", "food", "together"],
   "icons": [
     { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }

@@ -24,7 +24,8 @@
     year: 'numeric', month: 'long', day: 'numeric',
   }).format(date);
 
-  const dayDiff = (a, b) => Math.floor((a.getTime() - b.getTime()) / 86400000);
+  const dateSerial = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000;
+  const dayDiff = (a, b) => dateSerial(a) - dateSerial(b);
 
   function updateDates() {
     const today = startOfToday();
@@ -100,14 +101,21 @@
     let ringX = pointerX;
     let ringY = pointerY;
 
+    let cursorFrame = 0;
     const renderCursor = () => {
       ringX += (pointerX - ringX) * 0.16;
       ringY += (pointerY - ringY) * 0.16;
       dot.style.transform = `translate(${pointerX}px, ${pointerY}px) translate(-50%, -50%)`;
       ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
-      window.requestAnimationFrame(renderCursor);
+      if (!document.hidden) cursorFrame = window.requestAnimationFrame(renderCursor);
     };
     renderCursor();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        window.cancelAnimationFrame(cursorFrame);
+        renderCursor();
+      }
+    });
 
     document.addEventListener('pointermove', (event) => {
       pointerX = event.clientX;
@@ -318,6 +326,8 @@
       });
     });
   }
+  document.dispatchEvent(new CustomEvent("ours:dishes-rendered"));
+
   function openLayer(layer, panel) {
     layer.hidden = false;
     document.body.classList.add('modal-open');
@@ -348,6 +358,7 @@
     $('#dishModalCategory').textContent = dish.category;
     $('#dishModalNumber').textContent = dish.number;
     $('#dishModalTitle').textContent = dish.name;
+    $('#dishModalTitle').dataset.dishId = id;
     $('#dishModalDesc').textContent = dish.desc;
     $('#dishModalTime').textContent = dish.time;
     $('#dishModalServes').textContent = `SERVES ${dish.serves}`;
@@ -357,6 +368,7 @@
     $('#modalQuantity').textContent = '1';
     $('#editDish').hidden = !dish.custom;
     openLayer($('#dishLayer'), $('#dishDialog'));
+    document.dispatchEvent(new CustomEvent('ours:dish-opened', { detail: { id } }));
   }
 
   function closeDish() {
@@ -601,7 +613,8 @@
       openDish(dish.id);
     };
     $('#chefPick').addEventListener('click', pickRandomDish);
-    $('#surpriseHero').addEventListener('click', pickRandomDish);
+    $('#surpriseHero')?.addEventListener('click', pickRandomDish);
+    $('#herPick')?.addEventListener('click', pickRandomDish);
 
     $('#closeDish').addEventListener('click', closeDish);
     $('#dishBackdrop').addEventListener('click', closeDish);
@@ -934,7 +947,7 @@
         gameFlipped = [];
         $('#gamePairs').textContent = `${gameMatched / 2} / ${GAME_SYMBOLS.length} 对`;
         if (gameMatched === gameDeck.length) {
-          renderGame();
+          $('#gameResult').textContent = '找到了。散落的回忆，最后还是坐回同一张桌。';
           burstConfetti(window.innerWidth / 2, window.innerHeight / 2);
           showToast('全部配对成功。今晚的回忆都到齐了。');
         }
@@ -1109,6 +1122,15 @@
     $('#soundToggle').addEventListener('click', toggleSound);
     window.setInterval(updateDates, 60000);
     window.setInterval(updateClock, 30000);
+    window.OURS_APP = {
+      getAllDishes,
+      getCart: () => ({ ...cart }),
+      showToast,
+      renderDishes,
+      openDish,
+      saveCart,
+    };
+    document.dispatchEvent(new CustomEvent('ours:ready'));
     window.addEventListener('load', () => document.body.classList.add('is-loaded'));
   }
 

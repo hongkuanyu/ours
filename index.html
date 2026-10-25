@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b0c0a" />
+  <meta name="theme-color" content="#FAF6F0" />
   <meta name="robots" content="noindex,nofollow" />
-  <meta name="description" content="OURS 午夜私厨，一间只为你开席的私人餐厅。" />
+  <meta name="description" content="OURS，一个记录两个人的回忆、愿望和私人餐厅的小世界。" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="OURS" />
-  <title>OURS — 今晚只为你开席</title>
+  <title>OURS — A Little World for Two</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <link rel="stylesheet" href="styles.css" />
   <script src="config.js" defer></script>
   <script src="menu-extra.js" defer></script>
+  <script src="store.js" defer></script>
   <script src="app.js" defer></script>
+  <script src="features.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#menu">跳到今晚菜单</a>
@@ -28,28 +30,31 @@
 
   <header class="site-header" id="siteHeader">
     <a class="brand magnetic" href="#home" aria-label="OURS 首页">
-      <span>OURS</span><small>TABLE 02</small>
+      <span>OURS</span><small>A LITTLE WORLD FOR TWO</small>
     </a>
     <nav class="desktop-nav" aria-label="主导航">
-      <a href="#menu">今晚菜单</a>
+      <a href="#home">首页</a>
       <a href="#memories">回忆</a>
+      <a href="#menu">私厨</a>
       <a href="#wishes">心愿</a>
-      <a href="#play">游戏</a>
-      <a href="#vault">私藏</a>
+      <a href="#play">一起玩</a>
+      <a href="#vault">秘密</a>
     </nav>
     <div class="header-actions">
       <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">SOUND <i></i></button>
+      <button class="data-pill" id="openDataMenu" type="button">备份</button>
       <button class="install-pill" id="installApp" type="button">安装 APP</button>
       <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span></button>
     </div>
   </header>  <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
-    <p>PRIVATE DINING / 只开给两个人</p>
+    <p>OUR LITTLE WORLD / 只开给两个人</p>
     <nav aria-label="移动端主导航">
-      <a href="#menu"><span>01</span>今晚菜单</a>
+      <a href="#home"><span>01</span>首页</a>
       <a href="#memories"><span>02</span>我们的回忆</a>
-      <a href="#wishes"><span>03</span>一起完成</a>
-      <a href="#play"><span>04</span>餐桌游戏</a>
-      <a href="#vault"><span>05</span>只属于我们</a>
+      <a href="#menu"><span>03</span>今晚私厨</a>
+      <a href="#wishes"><span>04</span>共同愿望</a>
+      <a href="#play"><span>05</span>一起玩</a>
+      <a href="#vault"><span>06</span>我们的秘密</a>
     </nav>
     <small>OURS · SINCE 2025</small>
   </div>
@@ -59,43 +64,65 @@
       <div class="hero-glow" aria-hidden="true"></div>
       <div class="hero-grid">
         <div class="hero-copy">
-          <p class="kicker" data-reveal>MIDNIGHT KITCHEN <span>—</span> 只开给两个人</p>
-          <h1 class="hero-title" aria-label="今晚，只为你开席">
-            <span class="line line-one" data-reveal>今晚</span>
-            <span class="line line-two" data-reveal>只为你</span>
-            <span class="line line-three outline" data-reveal>开席。</span>
+          <p class="kicker" data-reveal>A LITTLE WORLD FOR TWO · 我们的私人小世界</p>
+          <h1 class="hero-title" aria-label="和你在一起的每一天，都值得收藏">
+            <span class="line line-one" data-reveal>和你在一起的</span>
+            <span class="line line-two" data-reveal>每一天，</span>
+            <span class="line line-three" data-reveal>都值得收藏。</span>
           </h1>
-          <p class="hero-note" data-reveal>一间不对外营业的私人餐厅。<br />菜单由我准备，位置永远留给你。</p>
+          <p class="hero-note" data-reveal>从第一次心动，到每一个平凡的今天。<br />这里不追赶生活，只把我们的生活好好留下来。</p>
           <div class="hero-actions" data-reveal>
-            <a class="magnetic primary-button" href="#menu">开始点菜 <span>↘</span></a>
-            <button class="text-button" id="surpriseHero" type="button">让主厨替我决定 <span>✦</span></button>
+            <a class="magnetic primary-button" href="#memories">看看我们的回忆 <span>↘</span></a>
+            <a class="text-button" href="#menu">今晚想吃什么？ <span>✦</span></a>
           </div>
-        </div>        <div class="hero-stage" id="heroStage" data-reveal>
-          <div class="stage-caption"><span>PLATE Nº 01</span><span>SEARED SCALLOP</span></div>
-          <div class="orbit orbit-one" aria-hidden="true"><i></i></div>
-          <div class="orbit orbit-two" aria-hidden="true"></div>
-          <div class="hero-plate" id="heroPlate" aria-hidden="true">
-            <span class="plate-rim"></span>
-            <span class="scallop scallop-a"></span>
-            <span class="scallop scallop-b"></span>
-            <span class="scallop scallop-c"></span>
-            <span class="citrus citrus-a"></span>
-            <span class="citrus citrus-b"></span>
-            <span class="herb herb-a"></span>
-            <span class="herb herb-b"></span>
-            <span class="sauce-swirl"></span>
-            <span class="plate-star">✦</span>
-          </div>
-          <span class="ingredient-note note-a">柑橘 · 海盐</span>
-          <span class="ingredient-note note-b">今晚 20:26</span>
-          <span class="stage-number" aria-hidden="true">02</span>
+          <article class="daily-note" data-reveal>
+            <span>今日小情书</span>
+            <p id="dailyNoteText">今天也想和你一起吃很多很多顿饭。</p>
+            <small id="dailyNoteDate">TODAY</small>
+          </article>
+        </div>
+
+        <div class="hero-stage hero-collage" id="heroStage" data-reveal aria-label="我们的照片占位拼贴">
+          <figure class="polaroid polaroid-one">
+            <img src="assets/photo-01.svg" alt="回忆照片占位图一" />
+            <figcaption><span>某个很普通的晚上</span><i>OUR PHOTO · 01</i></figcaption>
+          </figure>
+          <figure class="polaroid polaroid-two">
+            <img src="assets/photo-02.svg" alt="回忆照片占位图二" />
+            <figcaption><span>并肩走过的路</span><i>OUR PHOTO · 02</i></figcaption>
+          </figure>
+          <figure class="polaroid polaroid-three">
+            <img src="assets/photo-03.svg" alt="回忆照片占位图三" />
+            <figcaption><span>窗边的慢时光</span><i>OUR PHOTO · 03</i></figcaption>
+          </figure>
+          <div class="handwritten-note">“以后还有很多顿饭，<br />要和你一起吃。”</div>
+          <div class="hero-seal"><span>O.</span><small>FOR TWO</small></div>
+          <span class="collage-caption">把真实合照替换进 assets，<br />这里就会成为我们的封面。</span>
         </div>
       </div>
-      <div class="hero-footer" data-reveal>
-        <span><i>01</i> PRIVATE TABLE FOR TWO</span>
-        <span id="togetherDays">DAY —</span>
-        <span id="todayLabel">TODAY</span>
-        <span class="scroll-cue">SCROLL TO TASTE <i>↓</i></span>
+
+      <div class="anniversary-strip" data-reveal>
+        <div class="anniversary-item main-day">
+          <span>我们在一起</span>
+          <strong id="daysNumber">—</strong>
+          <small>天 · <b id="togetherDays">DAY —</b></small>
+        </div>
+        <div class="anniversary-item">
+          <span>下一个恋爱周年</span>
+          <strong id="nextAnniversaryDays">—</strong>
+          <small id="anniversaryCaption">还在计算</small>
+        </div>
+        <div class="anniversary-item">
+          <span>距离她的生日</span>
+          <strong id="birthdayDays">—</strong>
+          <small id="birthdayDateLabel">生日倒计时</small>
+        </div>
+        <div class="anniversary-item meeting-item">
+          <span>下次见面</span>
+          <strong id="nextMeetingDays">—</strong>
+          <small id="nextMeetingLabel"><button id="setNextMeeting" type="button">设置见面的日子</button></small>
+        </div>
+        <span class="anniversary-date"><i id="todayLabel">TODAY</i><br /><i id="startDateLabel">从我们开始的那天</i></span>
       </div>
     </section>
     <div class="ticker" aria-hidden="true">
@@ -126,6 +153,7 @@
         <div class="menu-tools">
           <button class="add-dish-button" id="addCustomDish" type="button"><span>＋</span> 自定义菜品</button>
           <button class="chef-pick" id="chefPick" type="button"><span>✦</span> 主厨盲选</button>
+          <button class="chef-pick" id="herPick" type="button"><span>♡</span> 她来点菜</button>
         </div>
       </div>
       <div class="dish-grid" id="dishGrid"></div>
@@ -134,6 +162,22 @@
         <p>“菜单不是规定。你突然想吃的，才是今晚真正的 special。”</p>
         <small>— 你的私人主厨</small>
       </div>
+
+      <div class="kitchen-section reveal" id="cooking">
+        <div class="kitchen-heading">
+          <div><p class="kicker">为了你，慢慢成为更好的厨师</p><h2>我的厨艺成长记录</h2></div>
+          <div class="kitchen-actions">
+            <button id="buildShoppingList" type="button">从今晚的桌生成清单</button>
+            <button id="openShopping" type="button">买菜清单 <span id="shoppingCount">0</span></button>
+          </div>
+        </div>
+        <div class="kitchen-stats">
+          <div><span>想学</span><strong id="cookWantCount">0</strong><small>道菜</small></div>
+          <div><span>练习中</span><strong id="cookPracticeCount">0</strong><small>道菜</small></div>
+          <div><span>我学会了</span><strong id="cookDoneCount">0</strong><small>道菜</small></div>
+          <div class="last-cooked"><span>最近完成</span><strong id="lastCookedDish">还没有记录</strong><small id="lastCookedDate">从第一道菜开始</small></div>
+        </div>
+      </div>
     </section>
     <section class="section memories-section" id="memories">
       <div class="section-index reveal"><span>02</span><i></i><small>AFTER DINNER, WE REMEMBER</small></div>
@@ -141,8 +185,12 @@
         <h2 class="display-title reveal">吃过的饭会忘记，<br /><em>和你吃过的不会。</em></h2>
         <div class="memory-summary reveal">
           <p>把照片、地点和当时的心情留在同一张桌上。点开照片，回到那个晚上。</p>
-          <span id="startDateLabel">从我们开始的那天</span>
+          <span id="memoryDateRange">从我们开始的那天</span>
         </div>
+      </div>
+      <div class="memory-toolbar reveal">
+        <div class="memory-years" id="memoryYearFilter" aria-label="按年份筛选回忆"></div>
+        <button class="add-memory-button" id="addMemory" type="button"><span>＋</span> 添加一段回忆</button>
       </div>
       <div class="memory-gallery" id="memoryGrid"></div>
     </section>
@@ -155,10 +203,10 @@
           <h2 class="display-title reveal">把未来，<br /><em>写成一张待办清单。</em></h2>
           <p class="section-aside reveal">完成一件，就点亮一件。愿望只保存在这台设备，不需要账号。</p>
           <div class="counter-pair reveal">
-            <div><span>在一起</span><strong id="daysNumber">—</strong><small>DAYS</small></div>
-            <div><span>距离生日</span><strong id="birthdayDays">—</strong><small>DAYS</small></div>
+            <div><span>在一起</span><strong id="ritualDaysNumber">—</strong><small>DAYS</small></div>
+            <div><span>距离生日</span><strong id="ritualBirthdayDays">—</strong><small>DAYS</small></div>
           </div>
-          <p class="birthday-caption reveal" id="birthdayDateLabel">生日倒计时</p>
+          <p class="birthday-caption reveal" id="ritualBirthdayDateLabel">生日倒计时</p>
         </div>        <div class="wish-card reveal">
           <div class="wish-topline"><span>OUR LIST</span><strong id="wishProgress">0 / 0</strong></div>
           <div class="wish-progress-track"><i id="wishBar"></i></div>
@@ -166,11 +214,31 @@
           <form class="wish-form" id="wishForm">
             <label for="wishInput">再加一件想一起做的事</label>
             <div><input id="wishInput" maxlength="80" placeholder="比如：去海边吃一次早餐" required /><button type="submit" aria-label="添加愿望">＋</button></div>
+            <div class="wish-form-meta"><input id="wishDate" type="date" aria-label="计划日期" /><input id="wishNote" maxlength="60" placeholder="备注，可选" aria-label="愿望备注" /></div>
           </form>
         </div>
       </div>
     </section>
 
+    <section class="section life-section" id="daily">
+      <div class="section-index reveal"><span>03.5</span><i></i><small>LITTLE NOTES FOR YOU</small></div>
+      <div class="life-grid">
+        <div class="life-copy">
+          <p class="kicker reveal">每日一句心里话</p>
+          <h2 class="display-title reveal">今天想对你说的，<br /><em>不想只留在脑子里。</em></h2>
+          <p class="section-aside reveal">写下今天的心情，按日期保存。只有这台设备会记得，也不会自动发到任何地方。</p>
+          <form class="daily-note-form reveal" id="dailyNoteForm">
+            <label for="dailyNoteInput">写给今天的你</label>
+            <textarea id="dailyNoteInput" rows="5" maxlength="240" placeholder="今天也很喜欢你，因为……" required></textarea>
+            <div><input id="dailyNoteEntryDate" type="date" aria-label="记录日期" /><button class="primary-button" type="submit">收进日记 <span>↗</span></button></div>
+          </form>
+        </div>
+        <div class="daily-notes-panel reveal">
+          <div class="daily-notes-head"><span>OUR LITTLE NOTES</span><strong id="dailyNotesCount">0</strong></div>
+          <div class="daily-notes-list" id="dailyNotesList"></div>
+        </div>
+      </div>
+    </section>
     <section class="section game-section" id="play">
       <div class="section-index reveal"><span>04</span><i></i><small>A GAME FOR TWO</small></div>
       <div class="game-layout">
@@ -187,6 +255,35 @@
           <div class="game-grid" id="gameGrid" aria-label="回忆翻牌游戏"></div>
           <p class="game-result" id="gameResult" role="status" aria-live="polite"></p>
         </div>
+      </div>
+    </section>
+    <section class="section play-more-section" id="play-more">
+      <div class="section-index reveal"><span>04.5</span><i></i><small>THINGS TO DO JUST FOR FUN</small></div>
+      <div class="play-more-grid">
+        <article class="date-box reveal">
+          <p class="kicker">约会盲盒</p>
+          <h2>今天，<br /><em>去哪里约会？</em></h2>
+          <p>不办抽奖，也不制造期待。只是在我们都没主意的时候，给今晚一个小小的开始。</p>
+          <button class="primary-button" id="drawDateIdea" type="button">打开一个约会灵感 <span>✦</span></button>
+          <div class="date-idea-result" id="dateIdeaResult">
+            <span>DATE IDEA</span>
+            <strong id="dateIdeaText">先按下按钮，看看今晚适合做什么。</strong>
+            <small id="dateIdeaHint">卡片会从我们的生活灵感里随机出现。</small>
+          </div>
+          <div class="date-idea-actions">
+            <button id="saveDateIdea" type="button" disabled>收藏灵感</button>
+            <button id="addDateIdeaWish" type="button" disabled>加入共同愿望</button>
+          </div>
+        </article>
+
+        <article class="quiz-card reveal">
+          <p class="kicker">情侣默契问答</p>
+          <h2>我们真的<br /><em>了解彼此吗？</em></h2>
+          <p>两个人轮流回答同一组问题，答案都选完再揭晓。不是考试，只是重新认识一次。</p>
+          <div class="quiz-summary" id="quizSummary"><span>还没有玩过</span><small>共 6 道默认问题</small></div>
+          <button class="primary-button" id="startQuiz" type="button">开始默契问答 <span>↗</span></button>
+          <button class="quiz-manage-button" id="manageQuestions" type="button">管理我们自己的问题</button>
+        </article>
       </div>
     </section>
     <section class="section vault-section" id="vault">
@@ -219,7 +316,12 @@
       <div><p>把 OURS 放到手机桌面</p><small>支持离线打开。像 App 一样，随时回我们的餐厅。</small></div>
       <button id="installAppFooter" type="button">安装到手机 <span>↗</span></button>
     </div>
-    <div class="footer-bottom">
+    <div class="backup-actions reveal">
+      <div><p>把我们的小世界带走</p><small>导出一个本地备份；照片、愿望、菜谱和做菜记录都会包含在内。</small></div>
+      <button id="exportData" type="button">导出备份 <span>↓</span></button>
+      <button id="importData" type="button">导入备份 <span>↑</span></button>
+      <input id="importDataFile" type="file" accept="application/json,.json" hidden />
+    </div>    <div class="footer-bottom">
       <span>OURS / PRIVATE SUPPER CLUB</span>
       <button id="heartButton" type="button">今天也很喜欢你 <strong id="heartCount">0</strong></button>
       <span>TABLE 02 · <b id="liveTime">--:--</b></span>
@@ -268,9 +370,21 @@
         <h2 id="dishModalTitle">菜品名称</h2>
         <p class="dish-modal-desc" id="dishModalDesc"></p>
         <div class="recipe-meta"><span id="dishModalTime">25 MIN</span><span id="dishModalServes">SERVES 2</span><span id="dishModalFlavor">清爽</span></div>
+        <div class="dish-personal-row">
+          <label>学习状态<select id="dishLearningStatus"><option value="want">还没学</option><option value="practice">正在练习</option><option value="done">我学会啦</option></select></label>
+          <button id="toggleDishFavorite" type="button"><span>♡</span> 她的最爱</button>
+        </div>
         <div class="recipe-columns">
           <div><h3>需要的食材</h3><ul id="dishModalIngredients"></ul></div>
           <div><h3>一起做</h3><ol id="dishModalSteps"></ol></div>
+        </div>
+        <div class="cooking-workspace">
+          <div class="cook-step-toolbar"><span id="cookStepProgress">0 / 0 步</span><span class="cook-toolbar-actions"><button id="startCooking" type="button">开始做菜</button><button id="resetCookingSteps" type="button">重新开始</button></span></div>
+          <div class="cooking-journal" id="cookingJournal" hidden>
+            <label>这次做得怎么样<select id="cookingRating"><option value="5">5 · 很好吃</option><option value="4">4 · 不错</option><option value="3">3 · 还可以</option><option value="2">2 · 再练练</option><option value="1">1 · 下次一定</option></select></label>
+            <textarea id="cookingNotes" rows="3" maxlength="240" placeholder="记下这次的火候、味道，或者她的一句话。"></textarea>
+            <button class="primary-button" id="finishCooking" type="button">完成这道菜 <span>↗</span></button>
+          </div>
         </div>
         <div class="dish-modal-actions">
           <div class="modal-order-actions">
@@ -325,16 +439,89 @@
     <figure class="memory-dialog" id="memoryDialog" role="dialog" aria-modal="true" aria-labelledby="memoryModalTitle">
       <button class="close-button" id="closeMemory" type="button" aria-label="关闭照片">×</button>
       <img id="memoryModalImage" src="assets/photo-01.svg" alt="" />
-      <figcaption><p id="memoryModalMeta">DATE / PLACE</p><h2 id="memoryModalTitle">回忆标题</h2><span id="memoryModalText"></span></figcaption>
+      <figcaption>
+        <p id="memoryModalMeta">DATE / PLACE</p>
+        <h2 id="memoryModalTitle">回忆标题</h2>
+        <span id="memoryModalText"></span>
+        <div class="memory-detail-actions">
+          <button id="editMemory" type="button">编辑这段回忆</button>
+          <button id="deleteMemory" type="button">删除</button>
+        </div>
+        <div class="memory-nav"><button id="memoryPrev" type="button">← 上一张</button><button id="memoryNext" type="button">下一张 →</button></div>
+      </figcaption>
     </figure>
   </div>
 
+  <div class="modal-layer memory-editor-layer" id="memoryEditorLayer" hidden>
+    <button class="modal-backdrop" id="memoryEditorBackdrop" type="button" aria-label="关闭回忆编辑器"></button>
+    <section class="memory-editor" id="memoryEditor" role="dialog" aria-modal="true" aria-labelledby="memoryEditorTitle">
+      <header class="editor-head">
+        <div><p>OUR MEMORY ALBUM</p><h2 id="memoryEditorTitle">添加一段回忆</h2></div>
+        <button class="close-button" id="closeMemoryEditor" type="button" aria-label="关闭回忆编辑器">×</button>
+      </header>
+      <form id="memoryEditorForm">
+        <div class="memory-editor-layout">
+          <div class="memory-editor-image">
+            <label class="image-upload" for="memoryImage"><img id="memoryImagePreview" src="assets/photo-01.svg" alt="回忆照片预览" /><span>选择一张照片</span></label>
+            <input id="memoryImage" type="file" accept="image/*" hidden />
+            <small>照片会压缩后保存在当前设备的 IndexedDB，不会自动上传到云端。</small>
+          </div>
+          <div class="memory-editor-fields">
+            <label class="field field-wide">标题<input id="memoryTitle" maxlength="40" placeholder="给这段回忆起个名字" required /></label>
+            <div class="form-grid">
+              <label class="field">日期<input id="memoryDate" type="date" required /></label>
+              <label class="field">地点<input id="memoryLocation" maxlength="30" placeholder="在哪里" /></label>
+            </div>
+            <label class="field field-wide">那天发生了什么<textarea id="memoryText" rows="5" maxlength="400" placeholder="写下想记住的细节。"></textarea></label>
+          </div>
+        </div>
+        <div class="editor-actions">
+          <span></span><span></span>
+          <button class="text-button" id="cancelMemoryEditor" type="button">取消</button>
+          <button class="primary-button" type="submit">保存回忆 <span>↗</span></button>
+        </div>
+      </form>
+    </section>
+  </div>
+  <div class="drawer-layer" id="shoppingLayer" hidden>
+    <button class="drawer-backdrop" id="shoppingBackdrop" type="button" aria-label="关闭买菜清单"></button>
+    <aside class="shopping-drawer" id="shoppingDrawer" aria-hidden="true" aria-labelledby="shoppingTitle">
+      <header>
+        <div><p>MARKET LIST / FOR TONIGHT</p><h2 id="shoppingTitle">买菜清单</h2></div>
+        <button class="close-button" id="closeShopping" type="button" aria-label="关闭买菜清单">×</button>
+      </header>
+      <p class="shopping-intro">从今晚的桌自动汇总，也可以随时手动补充。清单只保存在当前设备。</p>
+      <div class="shopping-lines" id="shoppingList"></div>
+      <form class="shopping-form" id="shoppingForm"><input id="shoppingInput" maxlength="50" placeholder="手动加一项，比如：新鲜迷迭香" required /><button type="submit">＋</button></form>
+      <div class="shopping-actions"><button id="copyShopping" type="button">复制清单</button><button id="clearShopping" type="button">清空清单</button></div>
+    </aside>
+  </div>
+
+  <div class="modal-layer meeting-layer" id="meetingLayer" hidden>
+    <button class="modal-backdrop" id="meetingBackdrop" type="button" aria-label="关闭见面日期设置"></button>
+    <section class="mini-dialog" role="dialog" aria-modal="true" aria-labelledby="meetingTitle">
+      <button class="close-button" id="closeMeeting" type="button" aria-label="关闭">×</button>
+      <p class="kicker">NEXT TIME WE MEET</p>
+      <h2 id="meetingTitle">下一次见面</h2>
+      <p>选一个我们约好要见面的日子。没有设置时，首页不会显示虚假的倒计时。</p>
+      <form id="meetingForm"><label class="field">见面日期<input id="meetingDate" type="date" required /></label><button class="primary-button" type="submit">保存日期 <span>↗</span></button><button class="text-button" id="clearMeeting" type="button">暂时不设置</button></form>
+    </section>
+  </div>
+  <div class="modal-layer quiz-layer" id="quizLayer" hidden>
+    <button class="modal-backdrop" id="quizBackdrop" type="button" aria-label="关闭默契问答"></button>
+    <section class="quiz-dialog" role="dialog" aria-modal="true" aria-labelledby="quizTitle">
+      <button class="close-button" id="closeQuiz" type="button" aria-label="关闭默契问答">×</button>
+      <p class="kicker">HOW WELL DO WE KNOW EACH OTHER</p>
+      <h2 id="quizTitle">情侣默契问答</h2>
+      <div class="quiz-body" id="quizBody"></div>
+    </section>
+  </div>
   <div class="install-layer" id="installLayer" hidden>
     <button class="modal-backdrop" id="installBackdrop" type="button" aria-label="关闭安装说明"></button>
     <section class="install-sheet" role="dialog" aria-modal="true" aria-labelledby="installTitle">
       <span class="monogram">O.</span>
       <p class="kicker">OURS, ALWAYS WITH YOU</p>
-      <h2 id="installTitle">把餐厅放进口袋</h2>
+      <h2 id="installTitle">把 OURS 放进口袋</h2>
       <p id="installCopy">安装后可以从手机桌面直接打开，也能在没网时回来看菜单。</p>
       <button class="primary-button" id="installNow" type="button">现在安装 <span>↗</span></button>
       <button class="text-button" id="closeInstall" type="button">下次再说</button>
@@ -344,11 +531,11 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <nav class="mobile-dock" aria-label="底部导航">
-    <a href="#menu"><span>⌘</span>菜单</a>
-    <a href="#memories"><span>◐</span>回忆</a>
-    <a href="#wishes"><span>✦</span>心愿</a>
-    <a href="#play"><span>◇</span>游戏</a>
-    <a href="#vault"><span>○</span>私藏</a>
+    <a href="#home" data-section="home"><span>⌂</span>首页</a>
+    <a href="#memories" data-section="memories"><span>◐</span>回忆</a>
+    <a href="#menu" data-section="menu"><span>⌘</span>私厨</a>
+    <a href="#wishes" data-section="wishes"><span>✦</span>心愿</a>
+    <a href="#play" data-section="play"><span>◇</span>一起玩</a>
   </nav>
 </body>
 </html>
