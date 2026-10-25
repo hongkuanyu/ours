@@ -1,0 +1,22 @@
+{
+  "name": "OURS 私人餐厅",
+  "short_name": "OURS",
+  "description": "一间只开给两个人的私人餐厅。",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090a08",
+  "theme_color": "#090a08",
+  "lang": "zh-CN",
+  "categories": ["lifestyle", "food"],
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "今晚菜单", "short_name": "菜单", "url": "./#menu", "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "我们的心愿", "short_name": "心愿", "url": "./#wishes", "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

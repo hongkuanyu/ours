@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <radialGradient id="bg" cx="58%" cy="30%" r="80%"><stop stop-color="#351416"/><stop offset=".62" stop-color="#130d0e"/><stop offset="1" stop-color="#080909"/></radialGradient>
+    <radialGradient id="plate" cx="37%" cy="28%"><stop stop-color="#f0e8d7"/><stop offset=".7" stop-color="#c6bca8"/><stop offset="1" stop-color="#776c5e"/></radialGradient>
+    <linearGradient id="meat" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#9f4935"/><stop offset=".55" stop-color="#6f261f"/><stop offset="1" stop-color="#3b1110"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="30" stdDeviation="30" flood-opacity=".7"/></filter>
+  </defs>
+  <rect width="800" height="800" fill="url(#bg)"/>
+  <circle cx="400" cy="400" r="286" fill="url(#plate)" filter="url(#shadow)"/>
+  <path d="M175 422c67-51 147-64 230-49 82 15 158 1 227-48 26 94-4 184-85 226-98 51-243 25-323-55-25-25-41-49-49-74z" fill="#241a14" opacity=".86"/>
+  <g transform="translate(390 376) rotate(-14)">
+    <path d="M-143 45c-32-74 19-154 105-157 92-3 151 74 124 153-24 67-96 85-158 62-34-12-58-35-71-58z" fill="url(#meat)" stroke="#b56645" stroke-width="3"/>
+    <path d="M-88-47c39-39 115-44 156-5M-114 3c42-28 137-31 184 9M-91 50c55-23 128-18 165 9" fill="none" stroke="#e8b083" stroke-width="3" opacity=".24"/>
+  </g>
+  <path d="M221 504c69 18 137 17 201-4" fill="none" stroke="#773b27" stroke-width="24" stroke-linecap="round" opacity=".8"/>
+  <g fill="none" stroke="#758b51" stroke-width="4" stroke-linecap="round">
+    <path d="M279 308c42-35 69-80 73-134M324 261l-38-19M341 226l39-13M348 195l-31-32"/>
+    <path d="M502 506c30-27 45-63 44-105M525 459l-31-17M528 432l31-12"/>
+  </g>
+  <g fill="#d7b26b" opacity=".8"><circle cx="237" cy="390" r="4"/><circle cx="556" cy="356" r="3"/><circle cx="511" cy="424" r="4"/><circle cx="307" cy="522" r="2"/></g>
+  <circle cx="400" cy="400" r="304" fill="none" stroke="#bb975c" opacity=".25"/>
+</svg>

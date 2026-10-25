@@ -4,7 +4,8 @@ window.OURS_CONFIG = {
   birthday: { month: 12, day: 31, year: null },
   memories: [
     { src: 'assets/photo-01.svg', date: '2026.10.24', location: '太湖边', title: '第一个一起看星海的夜晚', text: '我们把一个普通的夜晚，留成了可以回看的地方。' },
-    { src: 'assets/photo-02.svg', date: '2026.09.01', location: '旧街', title: '走了很远，但谁都没喊累', text: '那天没有目的地，只有并肩走路的声音。' },    { src: 'assets/photo-03.svg', date: '2026.07.18', location: '窗边', title: '雨落下来的时候', text: '我们在窗边坐了很久，谁都没有急着说话。' },
+    { src: 'assets/photo-02.svg', date: '2026.09.01', location: '旧街', title: '走了很远，但谁都没喊累', text: '那天没有目的地，只有并肩走路的声音。' },
+    { src: 'assets/photo-03.svg', date: '2026.07.18', location: '窗边', title: '雨落下来的时候', text: '我们在窗边坐了很久，谁都没有急着说话。' },
     { src: 'assets/photo-04.svg', date: '2026.05.20', location: '家', title: '普通但很好的一天', text: '没有发生什么大事，但我们都记得。' },
   ],
   wishes: [
@@ -13,19 +14,58 @@ window.OURS_CONFIG = {
     { id: 'trip', title: '来一次说走就走的旅行' },
     { id: 'cook', title: '一起认真做一顿饭' },
     { id: 'sunset', title: '找一个地方安静地看日落' },
-  ],
-  gamePairs: [
+  ],  gamePairs: [
     { symbol: '星', note: '一起看过的那片夜空。' },
     { symbol: '海', note: '还没有见到，但已经在期待的海。' },
     { symbol: '月', note: '那些不愿意挂电话的晚上。' },
     { symbol: '信', note: '写给未来的我们。' },
     { symbol: '花', note: '路边不起眼却很温柔的小花。' },
     { symbol: '家', note: '一起把普通房间变成家的那天。' },
-  ],  vault: {
-    hint: '提示：我们的第一个纪念日，或者那串熟悉的数字。',
+  ],
+  menu: [
+    {
+      id: 'scallop', number: '01', category: '前菜', name: '柑橘炙扇贝', en: 'CITRUS SCALLOP',
+      price: 68, image: 'assets/dish-scallop.svg', time: '25 MIN', serves: '2', flavor: '清新 / 海味', badge: '今晚推荐',
+      desc: '把扇贝煎到边缘微焦，配一片橙子和一点海盐。酸味先到，甜味留在后面。',
+      ingredients: ['鲜扇贝 6 颗', '橙子 1 个', '无盐黄油 15g', '海盐与黑胡椒', '嫩香草少许'],
+      steps: ['扇贝擦干，两面撒海盐。', '平底锅烧热，黄油融化后放入扇贝。', '每面煎 90 秒，出锅前挤一点橙汁。', '摆盘，补橙片和香草。'],
+    },    {
+      id: 'pasta', number: '02', category: '主菜', name: '松露奶油意面', en: 'TRUFFLE PASTA',
+      price: 88, image: 'assets/dish-pasta.svg', time: '30 MIN', serves: '2', flavor: '浓郁 / 奶香', badge: '她的偏爱',
+      desc: '蘑菇、奶油和黑胡椒慢慢收成一层发亮的酱汁，最后刨上大量帕玛森。',
+      ingredients: ['意面 180g', '口蘑 150g', '淡奶油 120ml', '帕玛森芝士 30g', '黑胡椒与松露油'],
+      steps: ['意面煮至比包装时间少一分钟。', '蘑菇切片，用黄油煎到金黄。', '加入奶油和一小杯面汤，煮至浓稠。', '拌入意面、芝士和黑胡椒。'],
+    },
+    {
+      id: 'soup', number: '03', category: '前菜', name: '番茄罗勒浓汤', en: 'TOMATO & BASIL',
+      price: 48, image: 'assets/dish-soup.svg', time: '20 MIN', serves: '2', flavor: '温暖 / 酸甜', badge: '雨天限定',
+      desc: '熟透的番茄被煮成柔软的颜色，罗勒只放一点点，刚好把夏天叫回来。',
+      ingredients: ['番茄 500g', '蒜 2 瓣', '洋葱半个', '罗勒 1 小把', '橄榄油与海盐'],
+      steps: ['番茄划十字，热水烫后去皮。', '洋葱和蒜用橄榄油炒香。', '加入番茄小火煮 15 分钟。', '搅打细腻，淋奶油并放罗勒。'],
+    },    {
+      id: 'beef', number: '04', category: '主菜', name: '红酒慢炖牛颊', en: 'BRAISED BEEF',
+      price: 128, image: 'assets/dish-beef.svg', time: '2 HR', serves: '2', flavor: '醇厚 / 回味', badge: '需要耐心',
+      desc: '小火把时间炖进肉里。出锅时不用刀，只用叉子就能分开，适合慢慢吃完的一晚。',
+      ingredients: ['牛颊肉 400g', '红酒 250ml', '胡萝卜 1 根', '洋葱半个', '迷迭香与牛肉高汤'],
+      steps: ['牛肉擦干，撒盐后煎至表面焦褐。', '蔬菜炒软，倒入红酒刮起锅底香气。', '加高汤和迷迭香，小火炖 90 分钟。', '开盖收汁，配土豆泥一起吃。'],
+    },
+    {
+      id: 'dessert', number: '05', category: '甜点', name: '海盐焦糖布丁', en: 'SALTED CARAMEL',
+      price: 52, image: 'assets/dish-dessert.svg', time: '40 MIN', serves: '2', flavor: '微咸 / 柔软', badge: '餐后必须',
+      desc: '焦糖先有一点苦，海盐把甜味托住。像那些不必说完，也能懂的瞬间。',
+      ingredients: ['鸡蛋 2 个', '牛奶 200ml', '细砂糖 60g', '海盐 1g', '香草精少许'],
+      steps: ['糖加少量水煮成焦糖，倒入模具。', '牛奶、鸡蛋和香草搅匀，过筛。', '倒入模具，水浴烤 25 分钟。', '冷藏后倒扣，撒几粒海盐。'],
+    },    {
+      id: 'drink', number: '06', category: '饮品', name: '桂花青柠气泡', en: 'OSMANTHUS FIZZ',
+      price: 42, image: 'assets/dish-drink.svg', time: '8 MIN', serves: '2', flavor: '清甜 / 气泡', badge: '碰杯用',
+      desc: '桂花糖浆、青柠和苏打水。气泡升起来的时候，适合说一句“今天也辛苦了”。',
+      ingredients: ['桂花糖浆 30ml', '青柠 1 个', '苏打水 300ml', '冰块适量', '薄荷叶少许'],
+      steps: ['杯中放冰和青柠片。', '倒入桂花糖浆。', '缓慢加入冰镇苏打水。', '轻轻搅拌，用薄荷装饰。'],
+    },
+  ],
+  vault: {    hint: '提示：我们的第一个纪念日，或者那串熟悉的数字。',
     iterations: 210000,
     salt: '1ouHgvnvpsCN3cxI3ZBV5A==',
-    iv: 'QPmUjrdwzWzFhYO1',
-    ciphertext: 'HVgiYl+Z+6oUjicVNXC0s/Zdjfbra6jPi2QkZEHogWA9mhUFnGZx4+GV6sBzUIF4sXfofI1/M8E+BxHYfyEh0cS8tcAiOJmJj2g9Cs40rLxaYnoTauel4A+Yri3B606pL+6BzdlCvfQ/NPux9smkyAgQvWHCvxfeU3y6nPdjByoFYwL31KyAZwv1r7Nxz2xJNXOUU5koE7JaW3XSGSWbDvJmvT2Mf05RvutAvyEwHv/VAyqcXJZzavHz80bTrNz3kmN9WYD5DwBWvXn4KwLoTWoUyNJupsiikwJq+0iY3UjDXnDcIL1L50Y/MeA9iHHwt05KybMIJi9nzYUBNnFt8XXFFFHniyFifx/HhcZocXe5WH04cS3wdpiL5azDu5dsmuJ/mnoF5nR2gnC1BCS2jxbb+/W4OQSl48Yd/LCtCFf/qHVaC6V3Ty6GXzwdXz5sMB62l31nHYByl6QZCaOv1k8+wddVYvPDnpC8M8B4r+cwNIC1KI1OEPvbnQTaWCN4chiU4CCe9ndMq07tzuXQhQWFKhFWMXAChlWavz/eRMutg/RM95cT1SuX3iiHcEY5wZkJ3TjtrcLJ2zJNw9ULwWr4XYvhMWaPtYdMWuKgPjD3/Jvgc7kiAKpCgkRE2chtf2z3DV+ni3TsooZpA0NysIkGiFOWfF7p1aGY9Q==',
+    iv: 'QPmUjrdwzWzFhYO1',    ciphertext: 'HVgiYl+Z+6oUjicVNXC0s/Zdjfbra6jPi2QkZEHogWA9mhUFnGZx4+GV6sBzUIF4sXfofI1/M8E+BxHYfyEh0cS8tcAiOJmJj2g9Cs40rLxaYnoTauel4A+Yri3B606pL+6BzdlCvfQ/NPux9smkyAgQvWHCvxfeU3y6nPdjByoFYwL31KyAZwv1r7Nxz2xJNXOUU5koE7JaW3XSGSWbDvJmvT2Mf05RvutAvyEwHv/VAyqcXJZzavHz80bTrNz3kmN9WYD5DwBWvXn4KwLoTWoUyNJupsiikwJq+0iY3UjDXnDcIL1L50Y/MeA9iHHwt05KybMIJi9nzYUBNnFt8XXFFFHniyFifx/HhcZocXe5WH04cS3wdpiL5azDu5dsmuJ/mnoF5nR2gnC1BCS2jxbb+/W4OQSl48Yd/LCtCFf/qHVaC6V3Ty6GXzwdXz5sMB62l31nHYByl6QZCaOv1k8+wddVYvPDnpC8M8B4r+cwNIC1KI1OEPvbnQTaWCN4chiU4CCe9ndMq07tzuXQhQWFKhFWMXAChlWavz/eRMutg/RM95cT1SuX3iiHcEY5wZkJ3TjtrcLJ2zJNw9ULwWr4XYvhMWaPtYdMWuKgPjD3/Jvgc7kiAKpCgkRE2chtf2z3DV+ni3TsooZpA0NysIkGiFOWfF7p1aGY9Q==',
   },
 };

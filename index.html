@@ -1,141 +1,354 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#101326" />
+  <meta name="theme-color" content="#0b0c0a" />
   <meta name="robots" content="noindex,nofollow" />
-  <meta name="description" content="只属于我们的私人宇宙。" />
-  <title>OURS — 只属于我们的宇宙</title>
+  <meta name="description" content="OURS 午夜私厨，一间只为你开席的私人餐厅。" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="OURS" />
+  <title>OURS — 今晚只为你开席</title>
+  <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="config.js" defer></script>
+  <script src="menu-extra.js" defer></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
-  <canvas id="starfield" aria-hidden="true"></canvas>
-  <header class="top-nav">
-    <a class="brand" href="#home">OURS</a>
+  <a class="skip-link" href="#menu">跳到今晚菜单</a>
+  <div class="cursor cursor-dot" id="cursorDot" aria-hidden="true"></div>
+  <div class="cursor cursor-ring" id="cursorRing" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="page-mask" id="pageMask" aria-hidden="true"></div>
+  <div class="scroll-progress"><i id="scrollProgress"></i></div>
+
+  <header class="site-header" id="siteHeader">
+    <a class="brand magnetic" href="#home" aria-label="OURS 首页">
+      <span>OURS</span><small>TABLE 02</small>
+    </a>
     <nav class="desktop-nav" aria-label="主导航">
-      <a href="#home">宇宙</a>
+      <a href="#menu">今晚菜单</a>
       <a href="#memories">回忆</a>
-      <a href="#wishes">愿望</a>
+      <a href="#wishes">心愿</a>
       <a href="#play">游戏</a>
-      <a href="#vault">暗号</a>
+      <a href="#vault">私藏</a>
     </nav>
-    <span class="nav-note">仅属于我们</span>
-  </header>
+    <div class="header-actions">
+      <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">SOUND <i></i></button>
+      <button class="install-pill" id="installApp" type="button">安装 APP</button>
+      <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span></button>
+    </div>
+  </header>  <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+    <p>PRIVATE DINING / 只开给两个人</p>
+    <nav aria-label="移动端主导航">
+      <a href="#menu"><span>01</span>今晚菜单</a>
+      <a href="#memories"><span>02</span>我们的回忆</a>
+      <a href="#wishes"><span>03</span>一起完成</a>
+      <a href="#play"><span>04</span>餐桌游戏</a>
+      <a href="#vault"><span>05</span>只属于我们</a>
+    </nav>
+    <small>OURS · SINCE 2025</small>
+  </div>
 
   <main>
     <section class="hero" id="home">
-      <div class="planet" aria-hidden="true">
-        <span class="planet-ring ring-one"></span>
-        <span class="planet-ring ring-two"></span>
-      </div>
-      <div class="hero-copy">
-        <p class="eyebrow">A private universe / 只属于两个人</p>
-        <h1>宇宙很大，<br />而我只偏爱你。</h1>
-        <p class="hero-subtitle">在无数颗星星之中，我们恰好遇见。<br />这里替我们记住那些不愿遗失的细节。</p>
-        <div class="hero-actions">
-          <a class="button primary" href="#memories">进入我们的宇宙 <span>→</span></a>
-          <button class="button ghost" id="heartButton" type="button">今天也很喜欢你 <span id="heartCount">0</span></button>
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="kicker" data-reveal>MIDNIGHT KITCHEN <span>—</span> 只开给两个人</p>
+          <h1 class="hero-title" aria-label="今晚，只为你开席">
+            <span class="line line-one" data-reveal>今晚</span>
+            <span class="line line-two" data-reveal>只为你</span>
+            <span class="line line-three outline" data-reveal>开席。</span>
+          </h1>
+          <p class="hero-note" data-reveal>一间不对外营业的私人餐厅。<br />菜单由我准备，位置永远留给你。</p>
+          <div class="hero-actions" data-reveal>
+            <a class="magnetic primary-button" href="#menu">开始点菜 <span>↘</span></a>
+            <button class="text-button" id="surpriseHero" type="button">让主厨替我决定 <span>✦</span></button>
+          </div>
+        </div>        <div class="hero-stage" id="heroStage" data-reveal>
+          <div class="stage-caption"><span>PLATE Nº 01</span><span>SEARED SCALLOP</span></div>
+          <div class="orbit orbit-one" aria-hidden="true"><i></i></div>
+          <div class="orbit orbit-two" aria-hidden="true"></div>
+          <div class="hero-plate" id="heroPlate" aria-hidden="true">
+            <span class="plate-rim"></span>
+            <span class="scallop scallop-a"></span>
+            <span class="scallop scallop-b"></span>
+            <span class="scallop scallop-c"></span>
+            <span class="citrus citrus-a"></span>
+            <span class="citrus citrus-b"></span>
+            <span class="herb herb-a"></span>
+            <span class="herb herb-b"></span>
+            <span class="sauce-swirl"></span>
+            <span class="plate-star">✦</span>
+          </div>
+          <span class="ingredient-note note-a">柑橘 · 海盐</span>
+          <span class="ingredient-note note-b">今晚 20:26</span>
+          <span class="stage-number" aria-hidden="true">02</span>
         </div>
-        <div class="hero-meta">
-          <span id="togetherDays">DAY —</span>
-          <span id="todayLabel">TODAY</span>
+      </div>
+      <div class="hero-footer" data-reveal>
+        <span><i>01</i> PRIVATE TABLE FOR TWO</span>
+        <span id="togetherDays">DAY —</span>
+        <span id="todayLabel">TODAY</span>
+        <span class="scroll-cue">SCROLL TO TASTE <i>↓</i></span>
+      </div>
+    </section>
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker-track">
+        <span>TONIGHT'S MENU</span><i>✦</i><span>只为你开席</span><i>✦</i><span>TABLE FOR TWO</span><i>✦</i><span>MADE WITH LOVE</span><i>✦</i>
+        <span>TONIGHT'S MENU</span><i>✦</i><span>只为你开席</span><i>✦</i><span>TABLE FOR TWO</span><i>✦</i><span>MADE WITH LOVE</span><i>✦</i>
+      </div>
+    </div>
+
+    <section class="section menu-section" id="menu">
+      <div class="section-index reveal"><span>01</span><i></i><small>THE TASTING MENU</small></div>
+      <div class="menu-heading">
+        <div>
+          <p class="kicker reveal">今晚想吃什么？</p>
+          <h2 class="display-title reveal">把喜欢，<br /><em>一道道端上来。</em></h2>
+        </div>
+        <p class="section-aside reveal">每一道菜都写了菜谱，也都能加入今晚的桌。这里是我们的私人餐厅，不翻台，不打烊。</p>
+      </div>      <div class="menu-toolbar reveal">
+        <div class="menu-filters" id="menuFilters" role="tablist" aria-label="菜品分类">
+          <button class="is-active" data-category="全部" role="tab" aria-selected="true">全部</button>
+          <button data-category="前菜" role="tab" aria-selected="false">前菜</button>
+          <button data-category="主菜" role="tab" aria-selected="false">主菜</button>
+          <button data-category="主食" role="tab" aria-selected="false">主食</button>
+          <button data-category="甜点" role="tab" aria-selected="false">甜点</button>
+          <button data-category="饮品" role="tab" aria-selected="false">饮品</button>
+          <button data-category="小吃" role="tab" aria-selected="false">小吃</button>
+        </div>
+        <div class="menu-tools">
+          <button class="add-dish-button" id="addCustomDish" type="button"><span>＋</span> 自定义菜品</button>
+          <button class="chef-pick" id="chefPick" type="button"><span>✦</span> 主厨盲选</button>
         </div>
       </div>
-      <p class="scroll-hint">向下，回到我们的时间</p>
-    </section>
-
-    <section class="section time-section" id="time">
-      <div class="section-head">
-        <p class="eyebrow">Time we share</p>
-        <h2>我们在一起的时间，<br />正在形成一条星轨。</h2>
-      </div>
-      <div class="time-grid">
-        <article class="time-card">
-          <span>在一起</span>
-          <strong id="daysNumber">—</strong>
-          <small>天</small>
-          <p>从 <span id="startDateLabel">我们的开始日期</span> 起。</p>
-        </article>
-        <article class="time-card birthday-card">
-          <span>距离她的生日</span>
-          <strong id="birthdayDays">—</strong>
-          <small>天</small>
-          <p id="birthdayDateLabel">把生日写进 config.js</p>
-        </article>
+      <div class="dish-grid" id="dishGrid"></div>
+      <div class="chef-note reveal">
+        <span class="chef-sign">O.</span>
+        <p>“菜单不是规定。你突然想吃的，才是今晚真正的 special。”</p>
+        <small>— 你的私人主厨</small>
       </div>
     </section>
-
-    <section class="section" id="memories">
-      <div class="section-head split-head">
-        <div><p class="eyebrow">Memory nebula</p><h2>回忆不是列表，<br />是我们走过的时间。</h2></div>
-        <p>照片、地点、天气，以及当时没有说出口的那句话。当前使用占位照片，替换 assets 里的图片即可。</p>
+    <section class="section memories-section" id="memories">
+      <div class="section-index reveal"><span>02</span><i></i><small>AFTER DINNER, WE REMEMBER</small></div>
+      <div class="memory-heading">
+        <h2 class="display-title reveal">吃过的饭会忘记，<br /><em>和你吃过的不会。</em></h2>
+        <div class="memory-summary reveal">
+          <p>把照片、地点和当时的心情留在同一张桌上。点开照片，回到那个晚上。</p>
+          <span id="startDateLabel">从我们开始的那天</span>
+        </div>
       </div>
-      <div class="memory-grid" id="memoryGrid"></div>
+      <div class="memory-gallery" id="memoryGrid"></div>
     </section>
 
-    <section class="section wish-section" id="wishes">
-      <div class="section-head split-head">
-        <div><p class="eyebrow">Wish galaxy</p><h2>把想一起做的事，<br />放进星海。</h2></div>
-        <p>愿望保存在当前浏览器里。不需要账号，也没有服务器。</p>
-      </div>
-      <div class="wish-layout">
-        <div class="wish-panel">
-          <div class="wish-progress"><span id="wishProgress">0 / 0</span><i><b id="wishBar"></b></i></div>
+    <section class="section ritual-section" id="wishes">
+      <div class="section-index reveal"><span>03</span><i></i><small>THINGS WE'LL DO TOGETHER</small></div>
+      <div class="ritual-grid">
+        <div class="ritual-copy">
+          <p class="kicker reveal">Our little rituals</p>
+          <h2 class="display-title reveal">把未来，<br /><em>写成一张待办清单。</em></h2>
+          <p class="section-aside reveal">完成一件，就点亮一件。愿望只保存在这台设备，不需要账号。</p>
+          <div class="counter-pair reveal">
+            <div><span>在一起</span><strong id="daysNumber">—</strong><small>DAYS</small></div>
+            <div><span>距离生日</span><strong id="birthdayDays">—</strong><small>DAYS</small></div>
+          </div>
+          <p class="birthday-caption reveal" id="birthdayDateLabel">生日倒计时</p>
+        </div>        <div class="wish-card reveal">
+          <div class="wish-topline"><span>OUR LIST</span><strong id="wishProgress">0 / 0</strong></div>
+          <div class="wish-progress-track"><i id="wishBar"></i></div>
           <div class="wish-list" id="wishList"></div>
           <form class="wish-form" id="wishForm">
-            <label for="wishInput">想一起完成的事</label>
-            <div><input id="wishInput" maxlength="80" placeholder="例如：一起去看一次海" required /><button class="button small" type="submit">放进星海</button></div>
+            <label for="wishInput">再加一件想一起做的事</label>
+            <div><input id="wishInput" maxlength="80" placeholder="比如：去海边吃一次早餐" required /><button type="submit" aria-label="添加愿望">＋</button></div>
           </form>
         </div>
-        <aside class="wish-aside"><span>✦</span><p>每完成一个愿望，就会有一颗星被点亮。</p></aside>
       </div>
     </section>
 
-    <section class="section" id="play">
-      <div class="section-head split-head">
-        <div><p class="eyebrow">Couple Lab</p><h2>把散落的记忆，<br />重新找回来。</h2></div>
-        <p>找到成对的卡片。每次翻开都会出现一张属于我们的符号。</p>
-      </div>
-      <div class="game-shell">
-        <div class="game-status"><span id="gameMoves">0 步</span><span id="gamePairs">0 / 6 对</span><button class="button ghost" id="restartGame" type="button">重新开始</button></div>
-        <div class="game-grid" id="gameGrid" aria-label="回忆翻牌游戏"></div>
-        <p class="game-result" id="gameResult" role="status" aria-live="polite"></p>
+    <section class="section game-section" id="play">
+      <div class="section-index reveal"><span>04</span><i></i><small>A GAME FOR TWO</small></div>
+      <div class="game-layout">
+        <div class="game-copy">
+          <p class="kicker reveal">餐桌游戏</p>
+          <h2 class="display-title reveal">把散落的菜，<br /><em>重新配成一对。</em></h2>
+          <p class="section-aside reveal">六组菜谱记忆藏在卡片背面。每一对，都是我们吃过的一顿饭。</p>
+          <div class="game-meta reveal">
+            <span id="gameMoves">0 步</span><span id="gamePairs">0 / 6 对</span>
+            <button id="restartGame" type="button">重新开局 ↻</button>
+          </div>
+        </div>
+        <div class="game-board reveal">
+          <div class="game-grid" id="gameGrid" aria-label="回忆翻牌游戏"></div>
+          <p class="game-result" id="gameResult" role="status" aria-live="polite"></p>
+        </div>
       </div>
     </section>
-
     <section class="section vault-section" id="vault">
-      <div class="vault-copy">
-        <p class="eyebrow">For Us</p>
-        <h2>还有一页，<br />只有我们知道暗号。</h2>
-        <p>输入暗号，打开藏在宇宙背面的那封信。无账号版本使用客户端解密；它不是银行级安全，请不要放高风险隐私。</p>
-        <form id="vaultForm" class="vault-form">
-          <label for="passphrase">我们的暗号</label>
-          <div><input id="passphrase" type="password" autocomplete="current-password" placeholder="只有我们知道" required /><button class="button primary" type="submit">打开</button></div>
-          <small>提示：我们的第一个纪念日，或者那串熟悉的数字。</small>
-          <p id="vaultError" class="error" role="alert"></p>
-        </form>
-      </div>
-      <div class="vault-letter" id="vaultLetter" hidden>
-        <span class="eyebrow">A letter for us</span>
-        <h3>亲爱的你：</h3>
-        <p id="vaultContent"></p>
-        <p class="signature">永远站在你这边的我</p>
+      <div class="section-index reveal"><span>05</span><i></i><small>CLOSED AFTER MIDNIGHT</small></div>
+      <div class="vault-layout">
+        <div class="vault-copy">
+          <p class="kicker reveal">For us only</p>
+          <h2 class="display-title reveal">吃完这一餐，<br /><em>还有一封信。</em></h2>
+          <p class="section-aside reveal">用只有我们知道的暗号打开。它不是银行保险箱，却替我们留住一些不想随便说出口的话。</p>
+          <form id="vaultForm" class="vault-form reveal">
+            <label for="passphrase">我们的暗号</label>
+            <div><input id="passphrase" type="password" autocomplete="off" placeholder="输入只有我们知道的那串数字" required /><button class="primary-button" type="submit">开封 <span>↗</span></button></div>
+            <small>提示：我们的第一个纪念日，或者那串熟悉的数字。</small>
+            <p id="vaultError" class="error" role="alert"></p>
+          </form>
+        </div>
+        <div class="vault-letter" id="vaultLetter" hidden>
+          <div class="letter-head"><span>A LETTER FOR US</span><span>SEALED WITH LOVE</span></div>
+          <h3>亲爱的你：</h3>
+          <p id="vaultContent"></p>
+          <p class="signature">永远站在你这边的我</p>
+          <button class="letter-close" id="closeLetter" type="button">收起信纸 ×</button>
+        </div>
       </div>
     </section>
   </main>
+  <footer class="site-footer">
+    <div class="app-promo reveal">
+      <span class="monogram">O.</span>
+      <div><p>把 OURS 放到手机桌面</p><small>支持离线打开。像 App 一样，随时回我们的餐厅。</small></div>
+      <button id="installAppFooter" type="button">安装到手机 <span>↗</span></button>
+    </div>
+    <div class="footer-bottom">
+      <span>OURS / PRIVATE SUPPER CLUB</span>
+      <button id="heartButton" type="button">今天也很喜欢你 <strong id="heartCount">0</strong></button>
+      <span>TABLE 02 · <b id="liveTime">--:--</b></span>
+    </div>
+  </footer>  <button class="order-fab" id="orderFab" type="button" aria-controls="orderDrawer" aria-expanded="false">
+    <span>今晚的桌</span><i id="orderFabCount">0</i><b>查看点单 ↗</b>
+  </button>
 
-  <footer class="footer">
-    <span>OURS / OUR LITTLE UNIVERSE</span>
-    <span>Built for two. Made with time.</span>
-  </footer>
+  <div class="drawer-layer" id="orderLayer" hidden>
+    <button class="drawer-backdrop" id="orderBackdrop" type="button" aria-label="关闭点单"></button>
+    <aside class="order-drawer" id="orderDrawer" aria-hidden="true" aria-labelledby="orderTitle">
+      <header>
+        <div><p>YOUR ORDER / TABLE 02</p><h2 id="orderTitle">今晚的桌</h2></div>
+        <button class="close-button" id="closeOrder" type="button" aria-label="关闭点单">×</button>
+      </header>
+      <div class="order-body" id="orderBody">
+        <div class="order-lines" id="orderLines"></div>
+        <div class="order-empty" id="orderEmpty">
+          <span>✦</span><p>桌上还是空的。<br />去菜单里挑几道喜欢的。</p>
+          <button id="emptyOrderBack" type="button">回到菜单</button>
+        </div>
+      </div>
+      <div class="order-summary" id="orderSummary">
+        <label for="orderNote">给厨房留句话</label>
+        <textarea id="orderNote" maxlength="120" placeholder="少一点辣，多一点你喜欢的味道。"></textarea>
+        <div class="order-total"><span><small>EST. TOTAL</small><strong id="orderTotal">¥ 0</strong></span><button id="submitOrder" type="button">交给厨房 <span>↗</span></button></div>
+      </div>
+      <div class="order-success" id="orderSuccess" hidden>
+        <span class="success-mark">✓</span>
+        <p>ORDER CONFIRMED</p>
+        <h3>今晚，等你入席。</h3>
+        <strong id="orderNumber">NO. 0000</strong>
+        <p id="orderSuccessCopy"></p>
+        <button id="copyOrder" type="button">复制点菜单</button>
+        <button id="newOrder" type="button">再点一桌</button>
+      </div>
+    </aside>
+  </div>
+  <div class="modal-layer" id="dishLayer" hidden>
+    <button class="modal-backdrop" id="dishBackdrop" type="button" aria-label="关闭菜谱"></button>
+    <article class="dish-dialog" id="dishDialog" role="dialog" aria-modal="true" aria-labelledby="dishModalTitle">
+      <button class="close-button dish-close" id="closeDish" type="button" aria-label="关闭菜谱">×</button>
+      <div class="dish-dialog-visual"><img id="dishModalImage" src="assets/dish-scallop.svg" alt="" /><span id="dishModalCategory">前菜</span></div>
+      <div class="dish-dialog-copy">
+        <p class="kicker">RECIPE Nº <span id="dishModalNumber">01</span></p>
+        <h2 id="dishModalTitle">菜品名称</h2>
+        <p class="dish-modal-desc" id="dishModalDesc"></p>
+        <div class="recipe-meta"><span id="dishModalTime">25 MIN</span><span id="dishModalServes">SERVES 2</span><span id="dishModalFlavor">清爽</span></div>
+        <div class="recipe-columns">
+          <div><h3>需要的食材</h3><ul id="dishModalIngredients"></ul></div>
+          <div><h3>一起做</h3><ol id="dishModalSteps"></ol></div>
+        </div>
+        <div class="dish-modal-actions">
+          <div class="modal-order-actions">
+            <div class="quantity-control"><button id="modalMinus" type="button">−</button><span id="modalQuantity">1</span><button id="modalPlus" type="button">＋</button></div>
+            <button class="edit-dish-button" id="editDish" type="button" hidden>编辑菜谱</button>
+          </div>
+          <button class="primary-button" id="modalAddDish" type="button">加入今晚的桌 <span>↗</span></button>
+        </div>
+      </div>
+    </article>
+  </div>
+  <div class="modal-layer editor-layer" id="dishEditorLayer" hidden>
+    <button class="modal-backdrop" id="editorBackdrop" type="button" aria-label="关闭菜谱编辑器"></button>
+    <section class="dish-editor" id="dishEditor" role="dialog" aria-modal="true" aria-labelledby="dishEditorTitle">
+      <header class="editor-head">
+        <div><p>OUR RECIPE BOOK</p><h2 id="dishEditorTitle">自定义菜品</h2></div>
+        <button class="close-button" id="closeDishEditor" type="button" aria-label="关闭编辑器">×</button>
+      </header>
+      <form id="dishEditorForm">
+        <div class="editor-layout">
+          <div class="editor-visual">
+            <label class="image-upload" for="dishImage"><img id="dishImagePreview" src="assets/dish-custom.svg" alt="菜品照片预览" /><span>上传菜品照片</span></label>
+            <input id="dishImage" type="file" accept="image/*" hidden />
+            <small>照片会自动压缩，只保存在当前浏览器。</small>
+          </div>
+          <div class="editor-fields">
+            <div class="form-grid">
+              <label class="field field-wide">菜名<input id="dishName" name="name" maxlength="30" placeholder="例如：她最爱的番茄牛腩" required /></label>
+              <label class="field">分类<select id="dishCategory" name="category"><option>前菜</option><option>主菜</option><option>主食</option><option>甜点</option><option>饮品</option><option>小吃</option></select></label>
+              <label class="field">价格<input id="dishPrice" name="price" type="number" min="0" max="9999" step="1" value="68" required /></label>
+            </div>            <div class="form-grid">
+              <label class="field field-wide">英文名（可选）<input id="dishEn" maxlength="40" placeholder="例如：TOMATO BEEF" /></label>
+              <label class="field">烹饪时间<input id="dishTime" maxlength="16" placeholder="45 MIN" /></label>
+              <label class="field">口味<input id="dishFlavor" maxlength="24" placeholder="酸甜 / 温暖" /></label>
+            </div>
+            <label class="field field-wide">一句话介绍<textarea id="dishDesc" rows="3" maxlength="180" placeholder="为什么想做这道菜？"></textarea></label>
+            <label class="field field-wide">食材<textarea id="dishEditorIngredients" rows="5" placeholder="每行一种，例如：&#10;番茄 3 个&#10;牛腩 400g" required></textarea></label>
+            <label class="field field-wide">做法<textarea id="dishEditorSteps" rows="6" placeholder="每行一个步骤，例如：&#10;牛腩焯水后擦干。&#10;番茄炒软后加入牛腩。" required></textarea></label>
+          </div>
+        </div>
+        <div class="editor-actions">
+          <button class="danger-button" id="deleteCustomDish" type="button" hidden>删除这道菜</button>
+          <span></span>
+          <button class="text-button" id="cancelDishEditor" type="button">取消</button>
+          <button class="primary-button" type="submit">保存菜谱 <span>↗</span></button>
+        </div>
+      </form>
+    </section>
+  </div>
+  <div class="modal-layer memory-layer" id="memoryLayer" hidden>
+    <button class="modal-backdrop" id="memoryBackdrop" type="button" aria-label="关闭照片"></button>
+    <figure class="memory-dialog" id="memoryDialog" role="dialog" aria-modal="true" aria-labelledby="memoryModalTitle">
+      <button class="close-button" id="closeMemory" type="button" aria-label="关闭照片">×</button>
+      <img id="memoryModalImage" src="assets/photo-01.svg" alt="" />
+      <figcaption><p id="memoryModalMeta">DATE / PLACE</p><h2 id="memoryModalTitle">回忆标题</h2><span id="memoryModalText"></span></figcaption>
+    </figure>
+  </div>
 
-  <nav class="mobile-nav" aria-label="移动端导航">
-    <a href="#home">宇宙</a><a href="#memories">回忆</a><a href="#wishes">愿望</a><a href="#play">游戏</a><a href="#vault">暗号</a>
+  <div class="install-layer" id="installLayer" hidden>
+    <button class="modal-backdrop" id="installBackdrop" type="button" aria-label="关闭安装说明"></button>
+    <section class="install-sheet" role="dialog" aria-modal="true" aria-labelledby="installTitle">
+      <span class="monogram">O.</span>
+      <p class="kicker">OURS, ALWAYS WITH YOU</p>
+      <h2 id="installTitle">把餐厅放进口袋</h2>
+      <p id="installCopy">安装后可以从手机桌面直接打开，也能在没网时回来看菜单。</p>
+      <button class="primary-button" id="installNow" type="button">现在安装 <span>↗</span></button>
+      <button class="text-button" id="closeInstall" type="button">下次再说</button>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <nav class="mobile-dock" aria-label="底部导航">
+    <a href="#menu"><span>⌘</span>菜单</a>
+    <a href="#memories"><span>◐</span>回忆</a>
+    <a href="#wishes"><span>✦</span>心愿</a>
+    <a href="#play"><span>◇</span>游戏</a>
+    <a href="#vault"><span>○</span>私藏</a>
   </nav>
-
-  <script src="config.js"></script>
-  <script src="app.js"></script>
 </body>
 </html>
