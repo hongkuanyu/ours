@@ -17,8 +17,10 @@
   <script src="config.js" defer></script>
   <script src="menu-extra.js" defer></script>
   <script src="store.js" defer></script>
+  <script src="profile.js" defer></script>
   <script src="app.js" defer></script>
   <script src="features.js" defer></script>
+  <script src="second-pass.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#menu">跳到今晚菜单</a>
@@ -42,7 +44,7 @@
     </nav>
     <div class="header-actions">
       <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">SOUND <i></i></button>
-      <button class="data-pill" id="openDataMenu" type="button">备份</button>
+      <button class="data-pill" id="openProfile" type="button">设置</button>
       <button class="install-pill" id="installApp" type="button">安装 APP</button>
       <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span></button>
     </div>
@@ -56,7 +58,8 @@
       <a href="#play"><span>05</span>一起玩</a>
       <a href="#vault"><span>06</span>我们的秘密</a>
     </nav>
-    <small>OURS · SINCE 2025</small>
+    <button class="mobile-settings" id="openProfileMobile" type="button">设置我们的小档案 ↗</button>
+<small>OURS · SINCE 2025</small>
   </div>
 
   <main>
@@ -75,6 +78,10 @@
             <a class="magnetic primary-button" href="#memories">看看我们的回忆 <span>↘</span></a>
             <a class="text-button" href="#menu">今晚想吃什么？ <span>✦</span></a>
           </div>
+          <div class="mobile-hero-dates" data-reveal aria-label="我们的重要日期">
+            <span>在一起 <strong id="mobileTogetherDays">—</strong> 天</span>
+            <span>距她生日 <strong id="mobileBirthdayDays">—</strong> 天</span>
+          </div>
           <article class="daily-note" data-reveal>
             <span>今日小情书</span>
             <p id="dailyNoteText">今天也想和你一起吃很多很多顿饭。</p>
@@ -84,8 +91,8 @@
 
         <div class="hero-stage hero-collage" id="heroStage" data-reveal aria-label="我们的照片占位拼贴">
           <figure class="polaroid polaroid-one">
-            <img src="assets/photo-01.svg" alt="回忆照片占位图一" />
-            <figcaption><span>某个很普通的晚上</span><i>OUR PHOTO · 01</i></figcaption>
+            <img id="heroProfilePhoto" src="assets/photo-01.svg" alt="回忆照片占位图一" />
+            <figcaption><span id="heroProfileCaption">某个很普通的晚上</span><i id="heroProfileAuthor">OUR PHOTO · 01</i></figcaption>
           </figure>
           <figure class="polaroid polaroid-two">
             <img src="assets/photo-02.svg" alt="回忆照片占位图二" />
@@ -97,7 +104,7 @@
           </figure>
           <div class="handwritten-note">“以后还有很多顿饭，<br />要和你一起吃。”</div>
           <div class="hero-seal"><span>O.</span><small>FOR TWO</small></div>
-          <span class="collage-caption">把真实合照替换进 assets，<br />这里就会成为我们的封面。</span>
+          <span class="collage-caption">在「设置」上传你们的合照，<br />这里就会成为我们的封面。</span>
         </div>
       </div>
 
@@ -132,6 +139,15 @@
       </div>
     </div>
 
+    <section class="home-recent" id="recent" aria-label="我们的近期动态">
+      <button class="on-this-day" id="onThisDayCard" type="button" hidden><span>那年今日</span><strong id="onThisDayText">去年的今天，我们……</strong><small>打开这段回忆 ↗</small></button>
+      <div class="recent-heading"><div><span>OUR RECENT DAYS</span><small>只显示真实保存的记录</small></div><button id="openYearReview" type="button">年度回顾 ↗</button></div>
+      <div class="recent-grid">
+        <button class="recent-item" id="recentMemory" type="button"><span>最近的回忆</span><strong>还没有回忆</strong><small>去相册添加第一张照片</small></button>
+        <button class="recent-item" id="recentCooking" type="button"><span>最近做过的菜</span><strong>还没有做菜记录</strong><small>从私厨开始第一道菜</small></button>
+        <button class="recent-item" id="recentWish" type="button"><span>最近完成的愿望</span><strong>还没有完成记录</strong><small>每完成一件事都值得留下</small></button>
+      </div>
+    </section>
     <section class="section menu-section" id="menu">
       <div class="section-index reveal"><span>01</span><i></i><small>THE TASTING MENU</small></div>
       <div class="menu-heading">
@@ -189,7 +205,7 @@
         </div>
       </div>
       <div class="memory-toolbar reveal">
-        <div class="memory-years" id="memoryYearFilter" aria-label="按年份筛选回忆"></div>
+        <div class="memory-filter-group"><div class="memory-years" id="memoryYearFilter" aria-label="按年份筛选回忆"></div><div class="memory-view-toggle" id="memoryViewToggle"><button class="is-active" data-memory-view="wall" type="button">照片墙</button><button data-memory-view="timeline" type="button">时光胶片</button></div></div>
         <button class="add-memory-button" id="addMemory" type="button"><span>＋</span> 添加一段回忆</button>
       </div>
       <div class="memory-gallery" id="memoryGrid"></div>
@@ -317,7 +333,7 @@
       <button id="installAppFooter" type="button">安装到手机 <span>↗</span></button>
     </div>
     <div class="backup-actions reveal">
-      <div><p>把我们的小世界带走</p><small>导出一个本地备份；照片、愿望、菜谱和做菜记录都会包含在内。</small></div>
+      <div><p>把我们的小世界带走</p><small>备份会包含私人照片和记录，请只保存在你信任的设备。</small></div>
       <button id="exportData" type="button">导出备份 <span>↓</span></button>
       <button id="importData" type="button">导入备份 <span>↑</span></button>
       <input id="importDataFile" type="file" accept="application/json,.json" hidden />
@@ -355,6 +371,7 @@
         <h3>今晚，等你入席。</h3>
         <strong id="orderNumber">NO. 0000</strong>
         <p id="orderSuccessCopy"></p>
+        <button id="shareOrder" type="button">分享今晚菜单</button>
         <button id="copyOrder" type="button">复制点菜单</button>
         <button id="newOrder" type="button">再点一桌</button>
       </div>
@@ -373,6 +390,8 @@
         <div class="dish-personal-row">
           <label>学习状态<select id="dishLearningStatus"><option value="want">还没学</option><option value="practice">正在练习</option><option value="done">我学会啦</option></select></label>
           <button id="toggleDishFavorite" type="button"><span>♡</span> 她的最爱</button>
+          <button id="toggleDishCraving" type="button"><span>♡</span> 想吃</button>
+          <label class="dish-plan-label">计划做 <input id="dishPlannedDate" type="date" /></label>
         </div>
         <div class="dish-source-row" id="dishSourceRow" hidden><span>灵感来源</span><a id="dishSourceLink" target="_blank" rel="noopener noreferrer">打开原帖 ↗</a></div>        <div class="recipe-columns">
           <div><h3>需要的食材</h3><ul id="dishModalIngredients"></ul></div>
@@ -386,6 +405,7 @@
             <button class="primary-button" id="finishCooking" type="button">完成这道菜 <span>↗</span></button>
           </div>
         </div>
+        <section class="cooking-history" id="cookingHistory" hidden></section>
         <div class="dish-modal-actions">
           <div class="modal-order-actions">
             <div class="quantity-control"><button id="modalMinus" type="button">−</button><span id="modalQuantity">1</span><button id="modalPlus" type="button">＋</button></div>
@@ -419,6 +439,7 @@
                 <button id="openRecipeSource" type="button" hidden>打开原链接 ↗</button>
                 <span id="recipeImportStatus" role="status">等待粘贴内容</span>
               </div>
+              <div class="recipe-import-preview" id="recipeImportPreview" hidden></div>
               <input id="dishSourceUrl" type="hidden" />
               <input id="dishSourcePlatform" type="hidden" />
             </section>
@@ -455,6 +476,8 @@
         <h2 id="memoryModalTitle">回忆标题</h2>
         <span id="memoryModalText"></span>
         <div class="memory-detail-actions">
+          <button id="memoryDishLink" type="button" hidden>回到关联菜谱</button>
+          <button id="memoryWishLink" type="button" hidden>查看关联愿望</button>
           <button id="editMemory" type="button">编辑这段回忆</button>
           <button id="deleteMemory" type="button">删除</button>
         </div>
@@ -527,6 +550,29 @@
       <div class="quiz-body" id="quizBody"></div>
     </section>
   </div>
+  <div class="modal-layer cooking-mode-layer" id="cookingModeLayer" hidden>
+    <button class="modal-backdrop" id="cookingModeBackdrop" type="button" aria-label="关闭做菜模式"></button>
+    <section class="cooking-mode-dialog" role="dialog" aria-modal="true" aria-labelledby="cookingModeTitle">
+      <header><div><p>IMMERSIVE COOKING MODE</p><h2 id="cookingModeTitle">做菜</h2></div><button class="close-button" id="closeCookingMode" type="button" aria-label="关闭做菜模式">×</button></header>
+      <div class="cooking-mode-progress"><span id="cookModeProgress">0 / 0</span><i><b id="cookModeProgressBar"></b></i></div>      <div class="cooking-mode-body">
+        <aside><h3>准备食材</h3><ul id="cookModeIngredients"></ul></aside>
+        <main><span class="kicker">CURRENT STEP</span><h3 id="cookModeStepTitle">准备开始</h3><p id="cookModeStepText"></p>          <div class="cook-timer"><output id="cookTimerDisplay">05:00</output><input id="cookTimerMinutes" type="number" min="1" max="90" value="5" aria-label="计时分钟" /><button id="cookTimerStart" type="button">开始计时</button><button id="cookTimerReset" type="button">重置</button></div>
+          <p class="timer-note" id="cookTimerNote">计时基于真实时间，可切换后台；网页关闭后不会弹出系统提醒。</p>
+        </main></div><footer><button id="cookPrev" type="button">← 上一步</button><button id="cookPause" type="button">保存并退出</button><button id="cookNext" type="button">下一步 →</button><button class="primary-button" id="cookModeFinish" type="button">完成烹饪 <span>↗</span></button></footer></section></div>
+  <div class="modal-layer cooking-result-layer" id="cookingResultLayer" hidden>
+    <button class="modal-backdrop" id="cookingResultBackdrop" type="button" aria-label="关闭做菜结果"></button>
+    <section class="cooking-result-dialog" role="dialog" aria-modal="true" aria-labelledby="cookingResultTitle">
+      <header><div><p>COOKED WITH LOVE</p><h2 id="cookingResultTitle">记录这次做菜</h2></div><button class="close-button" id="closeCookingResult" type="button" aria-label="关闭">×</button></header>
+      <div class="cooking-result-body" id="cookingResultBody"></div>
+      <div class="cooking-result-success" id="cookingResultSuccess" hidden></div>
+    </section>
+  </div>  <div class="modal-layer year-review-layer" id="yearReviewLayer" hidden>
+    <button class="modal-backdrop" id="yearReviewBackdrop" type="button" aria-label="关闭年度回顾"></button>
+    <section class="year-review-dialog" role="dialog" aria-modal="true" aria-labelledby="yearReviewTitle">
+      <header><div><p>OUR YEAR IN LITTLE MOMENTS</p><h2 id="yearReviewTitle">我们的年度回顾</h2></div><button class="close-button" id="closeYearReview" type="button" aria-label="关闭">×</button></header>
+      <div class="year-review-body" id="yearReviewBody"></div>
+    </section>
+  </div>  <div class="modal-layer profile-layer" id="profileLayer" hidden><button class="modal-backdrop" id="profileBackdrop" type="button" aria-label="关闭设置"></button><section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profileTitle"><header><div><p>MAKE OURS YOURS</p><h2 id="profileTitle">我们的小档案</h2></div><button class="close-button" id="closeProfile" type="button" aria-label="关闭设置">×</button></header><div class="profile-body" id="profileBody"></div></section></div>
   <div class="install-layer" id="installLayer" hidden>
     <button class="modal-backdrop" id="installBackdrop" type="button" aria-label="关闭安装说明"></button>
     <section class="install-sheet" role="dialog" aria-modal="true" aria-labelledby="installTitle">

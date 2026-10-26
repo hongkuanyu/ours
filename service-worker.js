@@ -1,7 +1,7 @@
-const CACHE_NAME = 'ours-supper-v6';
+const CACHE_NAME = 'ours-supper-v7';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './config.js',
-  './manifest.webmanifest', './menu-extra.js', './store.js', './features.js', './assets/icon.svg', './assets/icon-192.png', './assets/icon-512.png',
+  './manifest.webmanifest', './menu-extra.js', './store.js', './profile.js', './features.js', './second-pass.js', './assets/icon.svg', './assets/icon-192.png', './assets/icon-512.png',
   './assets/dish-scallop.svg', './assets/dish-pasta.svg', './assets/dish-beef.svg',
   './assets/dish-soup.svg', './assets/dish-dessert.svg', './assets/dish-drink.svg', './assets/dish-custom.svg',
   './assets/photo-01.svg', './assets/photo-02.svg', './assets/photo-03.svg', './assets/photo-04.svg'

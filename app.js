@@ -39,6 +39,8 @@
     $('#todayLabel').textContent = formatDate(today);
     $('#daysNumber').textContent = String(days);
     $('#birthdayDays').textContent = String(Math.max(0, dayDiff(birthday, today)));
+    if ($('#mobileTogetherDays')) $('#mobileTogetherDays').textContent = String(days);
+    if ($('#mobileBirthdayDays')) $('#mobileBirthdayDays').textContent = String(Math.max(0, dayDiff(birthday, today)));
     $('#startDateLabel').textContent = `从 ${formatDate(start)} 开始`;
     $('#birthdayDateLabel').textContent = `${formatDate(birthday)} · 生日倒计时`;
   }
@@ -230,6 +232,7 @@
   let editingDishId = null;
   let pendingDishImage = '';
   let deleteConfirmTimer = 0;
+  const layerFocus = new WeakMap();
 
   function loadCart() {
     try {
@@ -329,6 +332,7 @@
   document.dispatchEvent(new CustomEvent("ours:dishes-rendered"));
 
   function openLayer(layer, panel) {
+    layerFocus.set(layer, document.activeElement);
     layer.hidden = false;
     document.body.classList.add('modal-open');
     window.requestAnimationFrame(() => {
@@ -341,11 +345,16 @@
   }
 
   function closeLayer(layer, panel) {
+    if (panel?.contains(document.activeElement)) document.activeElement.blur();
     layer.classList.remove('is-open');
     panel?.classList.remove('is-open');
     panel?.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
-    window.setTimeout(() => { layer.hidden = true; }, reducedMotion ? 0 : 320);
+    const target = layerFocus.get(layer);
+    window.setTimeout(() => {
+      layer.hidden = true;
+      target?.focus?.({ preventScroll: true });
+    }, reducedMotion ? 0 : 320);
   }
 
   function openDish(id) {
@@ -1116,8 +1125,6 @@
     bindMenu();
     bindDishEditor();
     bindOrder();
-    bindMemories();
-    bindWishes();
     bindHeart();
     bindGame();
     bindVault();

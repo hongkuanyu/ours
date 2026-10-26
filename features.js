@@ -17,6 +17,8 @@
   const dayDiff = (a, b) => dateSerial(a) - dateSerial(b);
   const formatDate = (date) => new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }).format(date);
   const uid = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const dialogFocus = new WeakMap();
+
 
   let toastTimer = 0;
   function toast(message) {
@@ -29,6 +31,7 @@
   }
 
   function openDialog(layer, panel) {
+    dialogFocus.set(layer, document.activeElement);
     layer.hidden = false;
     document.body.classList.add('modal-open');
     window.requestAnimationFrame(() => {
@@ -40,11 +43,16 @@
   }
 
   function closeDialog(layer, panel) {
+    if (panel.contains(document.activeElement)) document.activeElement.blur();
     layer.classList.remove('is-open');
     panel.classList.remove('is-open');
     panel.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
-    window.setTimeout(() => { layer.hidden = true; }, reducedMotion ? 0 : 320);
+    const target = dialogFocus.get(layer);
+    window.setTimeout(() => {
+      layer.hidden = true;
+      target?.focus?.({ preventScroll: true });
+    }, reducedMotion ? 0 : 320);
   }
 
   function sparkle(x, y) {
@@ -225,46 +233,61 @@
     list.innerHTML = wishes.map((wish) => `
       <div class="wish-item ${wish.done ? 'is-done' : ''}" data-wish-id="${escapeHTML(wish.id)}">
         <button type="button" aria-label="${wish.done ? '标记为未完成' : '标记为已完成'}"><span>✓</span></button>
-        <div><p>${escapeHTML(wish.title)}</p><div class="wish-meta">${wish.date ? `<time>${escapeHTML(wish.date)}</time>` : ''}${wish.note ? `<span>${escapeHTML(wish.note)}</span>` : ''}${wish.completedAt ? `<span>完成于 ${escapeHTML(wish.completedAt)}</span>` : ''}</div></div>
+        <div><p>${escapeHTML(wish.title)}</p><div class="wish-meta">${wish.date ? `<time>${escapeHTML(wish.date)}</time>` : ''}${wish.note ? `<span>${escapeHTML(wish.note)}</span>` : ''}${wish.completedAt ? `<span>完成于 ${escapeHTML(wish.completedAt)}</span>` : ''}</div>${wish.done ? `<button class="wish-memory-button" type="button" data-wish-memory="${escapeHTML(wish.id)}">${wish.memoryId ? '查看纪念' : '留下纪念'}</button>` : ''}</div>
         <small>${wish.done ? 'DONE' : 'TO DO'}</small>
       </div>
     `).join('');
   }
 
   function addWish(title, note = '', date = '') {
-    if (!title) return;
+    if (!title) return false;
     wishes.push({ id: uid('wish'), title, note, date, done: false, createdAt: todayISO(), completedAt: null });
-    saveWishes();
+    if (!saveWishes()) {
+      wishes.pop();
+      toast('愿望保存失败，请检查浏览器存储空间。');
+      return false;
+    }
     renderWishes();
+    document.dispatchEvent(new CustomEvent('ours:data-changed'));
     toast('已经放进共同愿望。');
+    return true;
   }
 
   function bindWishesEnhanced() {
     const list = $('#wishList');
     const form = $('#wishForm');
-    const listClone = list.cloneNode(false);
-    const formClone = form.cloneNode(true);
-    list.replaceWith(listClone);
-    form.replaceWith(formClone);
-    listClone.addEventListener('click', (event) => {
+    list.addEventListener('click', (event) => {
       const item = event.target.closest('[data-wish-id]');
       if (!item || !event.target.closest('button')) return;
       const wish = wishes.find((entry) => entry.id === item.dataset.wishId);
       if (!wish) return;
+      const memoryButton = event.target.closest('[data-wish-memory]');
+      if (memoryButton) {
+        if (wish.memoryId) openMemoryById(wish.memoryId);
+        else document.dispatchEvent(new CustomEvent('ours:wish-memory', { detail: { id: wish.id } }));
+        return;
+      }
+      const previous = { done: wish.done, completedAt: wish.completedAt, memoryId: wish.memoryId };
       wish.done = !wish.done;
       wish.completedAt = wish.done ? todayISO() : null;
-      saveWishes();
+      if (!wish.done) wish.memoryId = '';
+      if (!saveWishes()) {
+        Object.assign(wish, previous);
+        toast('愿望状态保存失败，请检查浏览器存储空间。');
+        return;
+      }
       renderWishes();
+      document.dispatchEvent(new CustomEvent('ours:data-changed'));
       if (wish.done) {
         sparkle(event.clientX, event.clientY);
         toast('又完成了一件想一起做的事。');
       }
     });
-    formClone.addEventListener('submit', (event) => {
+    form.addEventListener('submit', (event) => {
       event.preventDefault();
       const title = $('#wishInput').value.trim();
       if (!title) return;
-      addWish(title, $('#wishNote').value.trim(), $('#wishDate').value);
+      if (!addWish(title, $('#wishNote').value.trim(), $('#wishDate').value)) return;
       $('#wishInput').value = '';
       $('#wishNote').value = '';
       $('#wishDate').value = '';
@@ -277,8 +300,13 @@
   let visibleMemories = [];
   let activeMemoryId = null;
   let editingMemoryId = null;
+  let editingMemoryDishId = null;
+  let editingMemoryWishId = null;
+  let editingMemoryCookingLogId = null;
   let pendingMemoryBlob = null;
+  let memoryPreviewObjectUrl = '';
   let memoryYear = '全部';
+  let memoryView = 'wall';
   let memoryDeleteArmed = false;
   let memoryDeleteTimer = 0;
   const memoryObjectUrls = new Map();
@@ -353,8 +381,12 @@
       grid.innerHTML = '<div class="shopping-empty">这一年还没有照片，等你来放第一张。</div>';
       return;
     }
+    grid.classList.toggle('is-timeline', memoryView === 'timeline');
     const cards = await Promise.all(filtered.map(async (memory, index) => {
       const image = await memoryImage(memory);
+      if (memoryView === 'timeline') {
+        return `<button class="timeline-memory" type="button" data-memory-id="${escapeHTML(memory.id)}"><img src="${escapeHTML(image)}" alt="${escapeHTML(memory.title)}" loading="lazy" /><span class="timeline-memory-copy"><time>${escapeHTML(memory.date)} · ${escapeHTML(memory.location || '没有写地点')}</time><strong>${escapeHTML(memory.title)}</strong><span>${escapeHTML(memory.text || '')}</span></span></button>`;
+      }
       return `
         <button class="memory-card is-visible" type="button" data-memory-id="${escapeHTML(memory.id)}" aria-label="打开回忆：${escapeHTML(memory.title)}">
           <span class="memory-image"><img src="${escapeHTML(image)}" alt="${escapeHTML(memory.title)}" loading="lazy" /><i>${String(index + 1).padStart(2, '0')}</i></span>
@@ -374,6 +406,10 @@
     $('#memoryModalText').textContent = memory.text || '';
     $('#memoryPrev').disabled = visibleMemories.length < 2;
     $('#memoryNext').disabled = visibleMemories.length < 2;
+    $('#memoryDishLink').hidden = !memory.dishId;
+    $('#memoryDishLink').dataset.dishId = memory.dishId || '';
+    $('#memoryWishLink').hidden = !memory.wishId;
+    $('#memoryWishLink').dataset.wishId = memory.wishId || '';
     openDialog($('#memoryLayer'), $('#memoryDialog'));
   }
 
@@ -384,27 +420,41 @@
     openMemoryById(visibleMemories[next].id);
   }
 
-  async function openMemoryEditor(id = null) {
+  async function openMemoryEditor(id = null, prefill = null) {
     const memory = id ? getAllMemories().find((item) => item.id === id) : null;
     editingMemoryId = memory?.id || null;
-    pendingMemoryBlob = null;
+    editingMemoryDishId = memory?.dishId || prefill?.dishId || null;
+    editingMemoryWishId = memory?.wishId || prefill?.wishId || null;
+    editingMemoryCookingLogId = memory?.cookingLogId || prefill?.cookingLogId || null;
+    pendingMemoryBlob = prefill?.photoBlob || null;
     memoryDeleteArmed = false;
     window.clearTimeout(memoryDeleteTimer);
     $('#memoryEditorForm').reset();
-    $('#memoryEditorTitle').textContent = memory ? '编辑这段回忆' : '添加一段回忆';
-    $('#memoryTitle').value = memory?.title || '';
-    $('#memoryDate').value = memory?.date || todayISO();
-    $('#memoryLocation').value = memory?.location || '';
-    $('#memoryText').value = memory?.text || '';
-    $('#memoryImagePreview').src = memory ? await memoryImage(memory) : 'assets/photo-01.svg';
+    $('#memoryEditorTitle').textContent = prefill?.title ? '把今天收进回忆' : memory ? '编辑这段回忆' : '添加一段回忆';
+    $('#memoryTitle').value = memory?.title || prefill?.title || '';
+    $('#memoryDate').value = memory?.date || prefill?.date || todayISO();
+    $('#memoryLocation').value = memory?.location || prefill?.location || '';
+    $('#memoryText').value = memory?.text || prefill?.text || '';
+    if (memoryPreviewObjectUrl) URL.revokeObjectURL(memoryPreviewObjectUrl);
+    memoryPreviewObjectUrl = '';
+    if (pendingMemoryBlob) {
+      memoryPreviewObjectUrl = URL.createObjectURL(pendingMemoryBlob);
+      $('#memoryImagePreview').src = memoryPreviewObjectUrl;
+    } else {
+      $('#memoryImagePreview').src = memory ? await memoryImage(memory) : 'assets/photo-01.svg';
+    }
     $('#deleteMemory').textContent = '删除';
     if (!$('#memoryLayer').hidden) closeDialog($('#memoryLayer'), $('#memoryDialog'));
     window.setTimeout(() => openDialog($('#memoryEditorLayer'), $('#memoryEditor')), reducedMotion ? 0 : 180);
   }
-
   function closeMemoryEditor() {
     closeDialog($('#memoryEditorLayer'), $('#memoryEditor'));
+    if (memoryPreviewObjectUrl) URL.revokeObjectURL(memoryPreviewObjectUrl);
+    memoryPreviewObjectUrl = '';
     editingMemoryId = null;
+    editingMemoryDishId = null;
+    editingMemoryWishId = null;
+    editingMemoryCookingLogId = null;
     pendingMemoryBlob = null;
   }
 
@@ -418,9 +468,16 @@
     }
     const existing = editingMemoryId ? getAllMemories().find((item) => item.id === editingMemoryId) : null;
     const id = existing?.id || uid('memory');
-    let photoId = existing?.photoId || '';
+    const linkedDishId = editingMemoryDishId || existing?.dishId || '';
+    const linkedWishId = editingMemoryWishId || existing?.wishId || '';
+    const linkedCookingLogId = editingMemoryCookingLogId || existing?.cookingLogId || '';
+    const previousPhotoId = existing?.photoId || '';
+    const memorySnapshot = memoryOverrides.slice();
+    let createdPhotoId = '';
+    let photoId = previousPhotoId;
     if (pendingMemoryBlob) {
-      photoId = existing?.photoId || uid('photo');
+      photoId = uid('photo');
+      createdPhotoId = photoId;
       try {
         await store.putPhoto(photoId, pendingMemoryBlob);
       } catch {
@@ -437,19 +494,46 @@
       text: $('#memoryText').value.trim(),
       photoId,
       src: photoId ? '' : (existing?.src || 'assets/photo-01.svg'),
+      dishId: linkedDishId,
+      wishId: linkedWishId,
+      cookingLogId: linkedCookingLogId,
       updatedAt: new Date().toISOString(),
     };
     memoryOverrides = memoryOverrides.filter((memory) => memory.id !== id).concat(record);
     if (!store.setJSON(MEMORY_KEY, memoryOverrides)) {
+      memoryOverrides = memorySnapshot;
+      if (createdPhotoId) store.deletePhoto(createdPhotoId).catch(() => {});
       toast('回忆保存失败，可能是浏览器存储空间不足。');
       return;
     }
+    if (previousPhotoId && previousPhotoId !== photoId) {
+      const cachedUrl = memoryObjectUrls.get(previousPhotoId);
+      if (cachedUrl) URL.revokeObjectURL(cachedUrl);
+      memoryObjectUrls.delete(previousPhotoId);
+      store.deletePhoto(previousPhotoId).catch(() => {});
+    }
+    if (linkedWishId) {
+      const wish = wishes.find((entry) => entry.id === linkedWishId);
+      if (wish) {
+        const previousMemoryId = wish.memoryId;
+        wish.memoryId = id;
+        if (!saveWishes()) {
+          wish.memoryId = previousMemoryId;
+          memoryOverrides = memorySnapshot;
+          store.setJSON(MEMORY_KEY, memorySnapshot);
+          if (createdPhotoId) store.deletePhoto(createdPhotoId).catch(() => {});
+          toast('愿望纪念关联保存失败，请检查浏览器存储空间。');
+          return;
+        }
+        renderWishes();
+      }
+    }
     closeMemoryEditor();
     await renderMemories();
+    document.dispatchEvent(new CustomEvent('ours:data-changed'));
     toast(existing ? '回忆已经更新。' : '这段回忆已经收进相册。');
     window.setTimeout(() => openMemoryById(id), reducedMotion ? 0 : 350);
   }
-
   function deleteActiveMemory() {
     const memory = getAllMemories().find((item) => item.id === activeMemoryId);
     if (!memory) return;
@@ -467,17 +551,21 @@
     memoryOverrides = memoryOverrides.filter((item) => item.id !== memory.id);
     memoryOverrides.push({ id: memory.id, deleted: true });
     store.setJSON(MEMORY_KEY, memoryOverrides);
-    if (memory.photoId) store.deletePhoto(memory.photoId).catch(() => {});
+    if (memory.photoId) {
+      const objectUrl = memoryObjectUrls.get(memory.photoId);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      memoryObjectUrls.delete(memory.photoId);
+      store.deletePhoto(memory.photoId).catch(() => {});
+    }
     closeDialog($('#memoryLayer'), $('#memoryDialog'));
     activeMemoryId = null;
     renderMemories();
+    document.dispatchEvent(new CustomEvent('ours:data-changed'));
     toast('这段回忆已经从相册移除。');
   }
 
   function bindMemoriesEnhanced() {
-    const legacyGrid = $('#memoryGrid');
-    const grid = legacyGrid.cloneNode(false);
-    legacyGrid.replaceWith(grid);
+    const grid = $('#memoryGrid');
     grid.addEventListener('click', (event) => {
       const card = event.target.closest('[data-memory-id]');
       if (card) openMemoryById(card.dataset.memoryId);
@@ -488,7 +576,13 @@
       memoryYear = button.dataset.year;
       renderMemories();
     });
-    $('#addMemory').addEventListener('click', () => openMemoryEditor());
+    $('#memoryViewToggle').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-memory-view]');
+      if (!button) return;
+      memoryView = button.dataset.memoryView;
+      $$('#memoryViewToggle button').forEach((item) => item.classList.toggle('is-active', item === button));
+      renderMemories();
+    });    $('#addMemory').addEventListener('click', () => openMemoryEditor());
     $('#memoryImage').addEventListener('change', async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -496,7 +590,9 @@
       preview.classList.add('is-loading');
       try {
         pendingMemoryBlob = await compressMemoryImage(file);
-        preview.src = URL.createObjectURL(pendingMemoryBlob);
+        if (memoryPreviewObjectUrl) URL.revokeObjectURL(memoryPreviewObjectUrl);
+        memoryPreviewObjectUrl = URL.createObjectURL(pendingMemoryBlob);
+        preview.src = memoryPreviewObjectUrl;
         toast('照片已经准备好。');
       } catch (error) {
         pendingMemoryBlob = null;
@@ -512,7 +608,18 @@
     $('#memoryPrev').addEventListener('click', () => stepMemory(-1));
     $('#memoryNext').addEventListener('click', () => stepMemory(1));
     $('#editMemory').addEventListener('click', () => activeMemoryId && openMemoryEditor(activeMemoryId));
-    $('#deleteMemory').addEventListener('click', deleteActiveMemory);
+    $('#memoryDishLink').addEventListener('click', () => {
+      const dishId = $('#memoryDishLink').dataset.dishId;
+      if (!dishId) return;
+      closeDialog($('#memoryLayer'), $('#memoryDialog'));
+      window.setTimeout(() => window.OURS_APP?.openDish?.(dishId), reducedMotion ? 0 : 180);
+    });
+    $('#memoryWishLink').addEventListener('click', () => {
+      const wishId = $('#memoryWishLink').dataset.wishId;
+      if (!wishId) return;
+      closeDialog($('#memoryLayer'), $('#memoryDialog'));
+      document.dispatchEvent(new CustomEvent('ours:focus-wish', { detail: { id: wishId } }));
+    });    $('#deleteMemory').addEventListener('click', deleteActiveMemory);
     let swipeStart = null;
     $('#memoryDialog').addEventListener('pointerdown', (event) => { swipeStart = event.clientX; });
     $('#memoryDialog').addEventListener('pointerup', (event) => {
@@ -533,7 +640,7 @@
   }
 
   function dishState(id) {
-    if (!cooking[id]) cooking[id] = { status: 'want', favorite: false, steps: {}, logs: [] };
+    if (!cooking[id]) cooking[id] = { status: 'want', favorite: false, craving: false, plannedDate: '', steps: {}, logs: [] };
     if (!cooking[id].steps) cooking[id].steps = {};
     if (!Array.isArray(cooking[id].logs)) cooking[id].logs = [];
     return cooking[id];
@@ -554,7 +661,7 @@
       copy.querySelector('.dish-status-row')?.remove();
       const row = document.createElement('span');
       row.className = 'dish-status-row';
-      row.innerHTML = `<span class="dish-status" data-status="${state.status}">${statusLabels[state.status] || statusLabels.want}</span>${state.favorite ? '<span class="dish-favorite-label">♡ 她的最爱</span>' : ''}`;
+      row.innerHTML = `<span class="dish-status" data-status="${state.status}">${statusLabels[state.status] || statusLabels.want}</span>${state.craving ? '<span class="dish-favorite-label">♡ 想吃</span>' : ''}${state.favorite ? '<span class="dish-favorite-label">♥ 她的最爱</span>' : ''}${state.plannedDate ? `<span class="dish-status">计划 ${escapeHTML(state.plannedDate)}</span>` : ''}`;
       foot.before(row);
     });
   }
@@ -583,6 +690,10 @@
     const favoriteButton = $('#toggleDishFavorite');
     favoriteButton.classList.toggle('is-favorite', state.favorite);
     favoriteButton.innerHTML = state.favorite ? '<span>♥</span> 她的最爱' : '<span>♡</span> 标记她的最爱';
+    const cravingButton = $('#toggleDishCraving');
+    cravingButton.classList.toggle('dish-craving-label', Boolean(state.craving));
+    cravingButton.innerHTML = state.craving ? '<span>♥</span> 想吃' : '<span>♡</span> 想吃';
+    $('#dishPlannedDate').value = state.plannedDate || '';
     $('#dishModalSteps').innerHTML = dish.steps.map((step, index) => `
       <li class="${state.steps[index] ? 'is-checked' : ''}"><label><input type="checkbox" data-step-index="${index}" ${state.steps[index] ? 'checked' : ''} /><span>${escapeHTML(step)}</span></label></li>`).join('');
     updateCookProgress(dish);
@@ -642,12 +753,8 @@
       if (!id) return;
       const state = dishState(id);
       state.status = 'practice';
-      state.steps = {};
       saveCooking();
-      renderDishCookingPanel(id);
-      decorateDishCards();
-      renderCookingDashboard();
-      toast('开始做菜。一步一步来就好。');
+      document.dispatchEvent(new CustomEvent('ours:start-cooking', { detail: { id } }));
     });    $('#resetCookingSteps').addEventListener('click', () => {
       const id = $('#dishModalTitle').dataset.dishId;
       if (!id) return;
@@ -936,7 +1043,7 @@
     $('#importDataFile').addEventListener('change', async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;
-      if (!window.confirm('导入备份会覆盖当前设备中的本地记录，确定继续吗？')) return;
+      if (!window.confirm('导入会覆盖当前设备中的菜谱、回忆、愿望和私人照片。原有数据会先做回滚快照；确定继续吗？')) return;
       try {
         const payload = JSON.parse(await file.text());
         await store.importData(payload);
@@ -995,6 +1102,27 @@
     window.setInterval(updateRelationshipExtras, 60000);
   }
 
+  window.OURS_FEATURES_API = {
+    allDishes,
+    dishState,
+    saveCooking,
+    getCooking: () => cooking,
+    getAllMemories,
+    memoryImage,
+    openMemoryById,
+    openMemoryEditor,
+    renderMemories,
+    renderWishes,
+    getWishes: () => wishes,
+    renderCookingDashboard,
+    decorateDishCards,
+    openDialog,
+    closeDialog,
+    toast,
+    sparkle,
+    todayISO,
+  };
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initFeatures, { once: true });
   } else {
@@ -1038,7 +1166,11 @@
     return '';
   }
   function parseRecipeSections(text) {
-    const rawLines = String(text).replace(/\r/g, '').split('\n').map((line) => line.trim()).filter(Boolean);
+    const expanded = String(text)
+      .replace(/\r/g, '')
+      .replace(/([。；;])\s*(?=\d{1,2}[.、)]\s*)/g, '$1\n')
+      .replace(/\s(?=\d{1,2}[.、)]\s*\S)/g, '\n');
+    const rawLines = expanded.split('\n').map((line) => line.trim()).filter(Boolean);
     const ingredients = [];
     const steps = [];
     let mode = '';
@@ -1070,38 +1202,13 @@
     }
     if (!steps.length) {
       rawLines.forEach((line) => {
-        if (/^\s*\d+[.、)]\s+/.test(line)) steps.push(cleanRecipeLine(line));
+        if (/^\s*\d{1,2}[.、)]\s*\S/.test(line)) steps.push(cleanRecipeLine(line));
       });
     }
-    return { ingredients: [...new Set(ingredients)].slice(0, 30), steps: [...new Set(steps)].slice(0, 30) };
-  }
-  function importRecipeText() {
-    const input = document.getElementById('recipeImportText');
-    const status = document.getElementById('recipeImportStatus');
-    const raw = input.value.trim();
-    if (!raw) { status.textContent = '先粘贴链接、分享文案或页面文字。'; return; }
-    const url = extractRecipeUrl(raw);
-    const platform = recipePlatform(url);
-    const title = guessRecipeTitle(raw, url);
-    const sections = parseRecipeSections(raw);
-    const time = guessRecipeTime(raw);
-    const safeUrl = isSafeHttpUrl(url) ? url : '';
-    document.getElementById('dishSourceUrl').value = safeUrl;
-    document.getElementById('dishSourcePlatform').value = platform;
-    const sourceButton = document.getElementById('openRecipeSource');
-    sourceButton.hidden = !safeUrl;
-    if (title) document.getElementById('dishName').value = title;
-    if (sections.ingredients.length) document.getElementById('dishEditorIngredients').value = sections.ingredients.join('\n');
-    if (sections.steps.length) document.getElementById('dishEditorSteps').value = sections.steps.join('\n');
-    if (time) document.getElementById('dishTime').value = time;
-    const category = guessRecipeCategory(raw);
-    document.getElementById('dishCategory').value = category;
-    if (title) document.getElementById('dishDesc').value = `来自${platform || '外部链接'}的菜谱灵感：${title}`;
-    if (!title && !sections.ingredients.length && !sections.steps.length) {
-      status.textContent = safeUrl ? `已识别${platform}链接。平台限制无法直接读取正文，请把详情页文字一起粘贴。` : '没有识别到可用的菜品信息。';
-      return;
-    }
-    status.textContent = `已填入：${title ? '菜名' : ''} ${sections.ingredients.length} 种食材 · ${sections.steps.length} 个步骤`;
+    return {
+      ingredients: [...new Set(ingredients.filter(Boolean))].slice(0, 30),
+      steps: [...new Set(steps.filter(Boolean))].slice(0, 30),
+    };
   }
   function renderDishSource(id) {
     const row = document.getElementById('dishSourceRow');
@@ -1123,7 +1230,13 @@
     if (!importInput) return;
     if (!sourceButton) return;
     importButton.addEventListener('click', importRecipeText);
-    importInput.addEventListener('paste', () => window.setTimeout(importRecipeText, 80));
+    document.getElementById('recipeImportPreview').addEventListener('click', (event) => {
+      if (event.target.closest('[data-import-confirm]')) applyRecipeImport(pendingRecipeImport);
+      if (event.target.closest('[data-import-cancel]')) {
+        document.getElementById('recipeImportPreview').hidden = true;
+        document.getElementById('recipeImportStatus').textContent = '已取消本次识别。';
+      }
+    });    importInput.addEventListener('paste', () => window.setTimeout(importRecipeText, 80));
     sourceButton.addEventListener('click', () => {
       const url = document.getElementById('dishSourceUrl').value;
       if (isSafeHttpUrl(url)) window.open(url, '_blank', 'noopener,noreferrer');
@@ -1134,4 +1247,72 @@
     document.addEventListener('DOMContentLoaded', initRecipeImporter, { once: true });
   } else {
     initRecipeImporter();
+  }
+  function escapeRecipeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[character]));
+  }
+  function parseRecipeImport(raw) {
+    const url = extractRecipeUrl(raw);
+    const platform = recipePlatform(url);
+    const title = guessRecipeTitle(raw, url);
+    const sections = parseRecipeSections(raw);
+    const time = guessRecipeTime(raw);
+    const category = guessRecipeCategory(raw);
+    const safeUrl = isSafeHttpUrl(url) ? url : '';
+    const missing = [];
+    if (!title) missing.push('菜名');
+    if (!sections.ingredients.length) missing.push('食材');
+    if (!sections.steps.length) missing.push('做法');
+    const limited = Boolean(safeUrl && !sections.ingredients.length && !sections.steps.length);
+    return { raw, url: safeUrl, platform, title, ingredients: sections.ingredients, steps: sections.steps, time, category, missing, limited };
+  }
+  let pendingRecipeImport = null;
+  function renderImportPreview(data) {
+    pendingRecipeImport = data;
+    const preview = document.getElementById('recipeImportPreview');
+    const status = document.getElementById('recipeImportStatus');
+    preview.hidden = false;
+    const missing = data.missing.length ? `还需要检查：${data.missing.join('、')}` : '信息较完整，确认后仍可手动修改';
+    const limitNote = data.limited
+      ? '<p class="recipe-preview-warning">这里只有分享链接，受抖音 / 小红书平台限制，静态网页无法自动读取正文。系统只保留来源，不会伪造食材和步骤。</p>'
+      : '<p class="recipe-preview-warning">请检查菜名、食材单位和步骤顺序；识别结果会先填入编辑器，不会直接保存。</p>';
+    preview.innerHTML = `<div class="recipe-preview-title">${escapeRecipeHTML(data.title || '未识别到菜名')}</div><div class="recipe-preview-meta"><span>${escapeRecipeHTML(data.platform || '手动文字')}</span><span>${data.ingredients.length} 种食材</span><span>${data.steps.length} 个步骤</span><span>${escapeRecipeHTML(data.time || '时间待补充')}</span></div><p>${missing}</p>${limitNote}<ul class="recipe-preview-list">${data.ingredients.slice(0, 3).map((item) => `<li>${escapeRecipeHTML(item)}</li>`).join('')}</ul><div class="recipe-preview-actions"><button type="button" data-import-confirm="true">${data.limited ? '只填入来源' : '确认填入'}</button><button type="button" data-import-cancel="true">取消</button></div>`;
+    status.textContent = '请检查识别结果，再确认填入。';
+  }
+  function recipeFormHasUnsavedImportData() {
+    return ['dishName', 'dishEditorIngredients', 'dishEditorSteps', 'dishDesc'].some((id) => {
+      const field = document.getElementById(id);
+      return Boolean(field?.value.trim());
+    });
+  }
+  function applyRecipeImport(data) {
+    if (!data) return;
+    if (recipeFormHasUnsavedImportData() && !window.confirm('编辑器里已经有一些内容。继续填入会覆盖同名字段，确定吗？')) return;
+    document.getElementById('dishSourceUrl').value = data.url;
+    document.getElementById('dishSourcePlatform').value = data.platform;
+    document.getElementById('openRecipeSource').hidden = !data.url;
+    if (data.title) document.getElementById('dishName').value = data.title;
+    if (data.ingredients.length) document.getElementById('dishEditorIngredients').value = data.ingredients.join('\n');
+    if (data.steps.length) document.getElementById('dishEditorSteps').value = data.steps.join('\n');
+    if (data.time) document.getElementById('dishTime').value = data.time;
+    if (data.category) document.getElementById('dishCategory').value = data.category;
+    if (data.title) document.getElementById('dishDesc').value = `来自${data.platform || '外部链接'}的菜谱灵感：${data.title}`;
+    document.getElementById('recipeImportPreview').hidden = true;
+    document.getElementById('recipeImportStatus').textContent = data.limited
+      ? `已保留 ${data.platform || '外部'}来源；请把正文粘贴进食材和做法。`
+      : `已确认填入：${data.ingredients.length} 种食材 · ${data.steps.length} 个步骤`;
+  }
+  function importRecipeText() {
+    const input = document.getElementById('recipeImportText');
+    const status = document.getElementById('recipeImportStatus');
+    const raw = input.value.trim();
+    if (!raw) { status.textContent = '先粘贴链接、分享文案或页面文字。'; return; }
+    const data = parseRecipeImport(raw);
+    if (!data.url && !data.title && !data.ingredients.length && !data.steps.length) {
+      status.textContent = '没有识别到可用的菜品信息。';
+      return;
+    }
+    renderImportPreview(data);
   }
