@@ -1,0 +1,416 @@
+/* OURS Liquid Glass floating navigation — isolated component layer */
+.app-liquid-dock {
+  --glass-bg:
+    linear-gradient(155deg, rgba(255, 255, 255, .76) 0%, rgba(255, 249, 244, .58) 46%, rgba(239, 224, 215, .66) 100%),
+    rgba(255, 250, 246, .54);
+  --glass-border: rgba(255, 255, 255, .64);
+  --glass-inner-border: rgba(48, 38, 41, .1);
+  --glass-highlight: rgba(255, 255, 255, .92);
+  --glass-shadow:
+    0 24px 62px rgba(48, 38, 41, .19),
+    0 6px 18px rgba(48, 38, 41, .07),
+    inset 0 1px 0 rgba(255, 255, 255, .96),
+    inset 0 -1px 0 rgba(255, 255, 255, .42);
+  --glass-blur: 30px;
+  --glass-saturate: 1.72;
+  --glass-active-bg:
+    linear-gradient(145deg, rgba(255, 255, 255, .78), rgba(237, 205, 207, .36)),
+    rgba(114, 47, 66, .085);
+  --glass-active-border: rgba(255, 255, 255, .76);
+  --glass-active-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .94),
+    inset 0 -1px 0 rgba(114, 47, 66, .05),
+    0 9px 22px rgba(114, 47, 66, .11);
+  --glass-radius: 30px;
+  --dock-height: 72px;
+  --dock-inset: 10px;
+  --dock-padding: 6px;
+  --dock-motion-duration: 380ms;
+  --dock-motion-ease: cubic-bezier(.22, 1, .36, 1);
+  position: fixed;
+  z-index: 72;
+  bottom: calc(var(--dock-inset) + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  display: none;
+  width: min(calc(100% - 26px), 456px);
+  height: var(--dock-height);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
+  padding: var(--dock-padding);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+  backdrop-filter: saturate(var(--glass-saturate)) blur(var(--glass-blur));
+  box-shadow: var(--glass-shadow);
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  isolation: isolate;
+  contain: layout style paint;
+  transition:
+    opacity 180ms ease,
+    transform 280ms var(--dock-motion-ease),
+    visibility 0s linear 0s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.app-liquid-dock::before {
+  position: absolute;
+  z-index: 0;
+  inset: 1px;
+  content: "";
+  border-radius: calc(var(--glass-radius) - 1px);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .58), transparent 24%),
+    linear-gradient(92deg, rgba(255, 255, 255, .22), transparent 28%, transparent 72%, rgba(255, 255, 255, .16));
+  box-shadow:
+    inset 0 0 0 1px var(--glass-inner-border),
+    inset 0 10px 16px -16px rgba(255, 255, 255, .98);
+  pointer-events: none;
+}
+
+.app-liquid-dock::after {
+  position: absolute;
+  z-index: 0;
+  right: 14%;
+  bottom: 2px;
+  left: 14%;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(185, 155, 107, .3), transparent);
+  opacity: .7;
+  pointer-events: none;
+}
+
+.app-dock-indicator {
+  position: absolute;
+  z-index: 1;
+  top: var(--dock-padding);
+  bottom: var(--dock-padding);
+  left: 0;
+  width: var(--dock-width, calc(20% - 12px));
+  border: 1px solid var(--glass-active-border);
+  border-radius: calc(var(--glass-radius) - var(--dock-padding) - 1px);
+  background: var(--glass-active-bg);
+  box-shadow: var(--glass-active-shadow);
+  opacity: 0;
+  transform: translate3d(var(--dock-x, var(--dock-padding)), 0, 0) scaleX(var(--dock-stretch, 1));
+  transform-origin: 50% 50%;
+  transition:
+    transform var(--dock-motion-duration) var(--dock-motion-ease),
+    width var(--dock-motion-duration) var(--dock-motion-ease),
+    opacity 150ms ease;
+  pointer-events: none;
+}
+
+.app-dock-indicator::before {
+  position: absolute;
+  top: 1px;
+  right: 10%;
+  left: 10%;
+  height: 44%;
+  content: "";
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .74), transparent);
+  opacity: .72;
+}
+
+.app-dock-indicator::after {
+  position: absolute;
+  right: 16%;
+  bottom: 4px;
+  left: 16%;
+  height: 38%;
+  content: "";
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(231, 185, 187, .23), transparent 72%);
+  opacity: .75;
+}
+
+.app-liquid-dock.is-ready .app-dock-indicator {
+  opacity: 1;
+}
+
+.app-liquid-dock.is-shifting .app-dock-indicator {
+  --dock-stretch: 1.035;
+  will-change: transform, width;
+}
+
+.app-liquid-dock a {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-width: 0;
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px 2px 4px;
+  border-radius: calc(var(--glass-radius) - 7px);
+  color: #827479;
+  text-align: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 180ms var(--dock-motion-ease),
+    opacity 150ms ease;
+}
+
+.app-liquid-dock a::before {
+  position: absolute;
+  z-index: -1;
+  inset: 5px 3px;
+  content: "";
+  border-radius: calc(var(--glass-radius) - 11px);
+  background: radial-gradient(circle at 50% 36%, rgba(114, 47, 66, .11), transparent 70%);
+  opacity: 0;
+  transform: scale(.9);
+  transition: opacity 120ms ease, transform 160ms var(--dock-motion-ease);
+  pointer-events: none;
+}
+
+.app-liquid-dock a.is-pressed::before,
+.app-liquid-dock a:active::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.app-liquid-dock a.is-active {
+  color: #722f42;
+}
+
+.app-dock-icon {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  transform: translateY(0);
+  transition: transform 150ms var(--dock-motion-ease);
+}
+
+.app-dock-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.58;
+  transform: translateY(0) scale(1);
+  transition:
+    transform 140ms var(--dock-motion-ease),
+    stroke-width 180ms var(--dock-motion-ease);
+}
+
+.app-liquid-dock a.is-active .app-dock-icon svg {
+  stroke-width: 1.88;
+  transform: translateY(-1px) scale(1.035);
+}
+
+.app-liquid-dock a.is-pressed .app-dock-icon svg,
+.app-liquid-dock a:active .app-dock-icon svg {
+  transform: translateY(0) scale(.95);
+  transition-duration: 110ms;
+}
+
+.app-dock-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  line-height: 1.1;
+  text-overflow: clip;
+  white-space: nowrap;
+  transition: opacity 150ms ease;
+}
+
+.app-liquid-dock a.is-pressed .app-dock-label,
+.app-liquid-dock a:active .app-dock-label {
+  opacity: .78;
+}
+
+@media (hover: hover) {
+  .app-liquid-dock a:not(.is-active):hover {
+    color: #5f4f55;
+  }
+
+  .app-liquid-dock a:not(.is-active):hover .app-dock-icon svg {
+    transform: translateY(-1px) scale(1.02);
+  }
+
+  .app-liquid-dock a.is-pressed .app-dock-icon svg,
+  .app-liquid-dock a.is-pressed:hover .app-dock-icon svg,
+  .app-liquid-dock a:active .app-dock-icon svg,
+  .app-liquid-dock a:active:hover .app-dock-icon svg {
+    transform: translateY(0) scale(.95);
+  }
+}
+@media (max-width: 899px) {
+  .app-liquid-dock {
+    display: grid;
+  }
+}
+
+body.modal-open .app-liquid-dock,
+body.app-quick-open .app-liquid-dock,
+body.app-keyboard-open .app-liquid-dock {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 22px) scale(.975);
+  transition:
+    opacity 160ms ease,
+    transform 220ms var(--dock-motion-ease),
+    visibility 0s linear 120ms;
+}
+
+/* Life and Us can place dark editorial content beneath the dock. */
+body[data-app-route="life"] .app-liquid-dock,
+body[data-app-route="us"] .app-liquid-dock {
+  --glass-bg:
+    linear-gradient(155deg, rgba(255, 255, 255, .82) 0%, rgba(255, 249, 244, .66) 46%, rgba(241, 228, 220, .72) 100%),
+    rgba(255, 250, 246, .63);
+  --glass-border: rgba(255, 255, 255, .72);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-liquid-dock {
+    background: rgba(255, 250, 246, .97);
+    border-color: rgba(48, 38, 41, .12);
+    box-shadow:
+      0 20px 54px rgba(48, 38, 41, .18),
+      0 4px 12px rgba(48, 38, 41, .06),
+      inset 0 1px 0 #fff;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .app-liquid-dock {
+    --glass-bg: rgba(255, 251, 247, .98);
+    --glass-border: rgba(48, 38, 41, .34);
+    --glass-inner-border: rgba(48, 38, 41, .28);
+    --glass-active-border: rgba(114, 47, 66, .32);
+  }
+
+  .app-liquid-dock a {
+    color: #4d3e43;
+  }
+
+  .app-liquid-dock a.is-active {
+    color: #5f2134;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .app-liquid-dock {
+    background: #fffaf5;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-liquid-dock {
+    --dock-height: 70px;
+    --dock-inset: 7px;
+    --dock-padding: 5px;
+    width: calc(100% - 14px);
+    border-radius: 28px;
+  }
+
+  .app-liquid-dock a {
+    min-height: 58px;
+    gap: 3px;
+  }
+
+  .app-dock-label {
+    font-size: 10.5px;
+  }
+
+  .app-dock-icon,
+  .app-dock-icon svg {
+    width: 21px;
+    height: 21px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) and (max-width: 899px) {
+  .app-liquid-dock {
+    --dock-height: 60px;
+    --dock-inset: 7px;
+    --dock-padding: 5px;
+    width: min(calc(100% - 120px), 456px);
+    border-radius: 26px;
+  }
+
+  .app-liquid-dock a {
+    min-height: 48px;
+    flex-direction: row;
+    gap: 6px;
+    padding-inline: 4px;
+  }
+
+  .app-dock-icon,
+  .app-dock-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .app-dock-label {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-liquid-dock {
+    --dock-motion-duration: 1ms;
+    transition-duration: 1ms;
+  }
+
+  .app-dock-indicator {
+    transition-duration: 1ms;
+  }
+
+  .app-liquid-dock.is-shifting .app-dock-indicator {
+    --dock-stretch: 1;
+    will-change: auto;
+  }
+
+  .app-dock-icon,
+  .app-dock-icon svg,
+  .app-dock-label,
+  .app-liquid-dock a::before {
+    transition-duration: 1ms;
+  }
+
+  .app-liquid-dock a.is-active .app-dock-icon svg,
+  .app-liquid-dock a.is-pressed .app-dock-icon svg,
+  .app-liquid-dock a:active .app-dock-icon svg {
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .app-liquid-dock {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .app-dock-indicator {
+    border: 1px solid Highlight;
+    background: Highlight;
+    box-shadow: none;
+  }
+
+  .app-liquid-dock a,
+  .app-liquid-dock a.is-active {
+    color: CanvasText;
+  }
+}

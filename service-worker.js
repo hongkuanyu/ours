@@ -1,7 +1,7 @@
-const CACHE_NAME = 'ours-supper-v7';
+const CACHE_NAME = 'ours-supper-v26';
 const APP_SHELL = [
-  './', './index.html', './styles.css', './app.js', './config.js',
-  './manifest.webmanifest', './menu-extra.js', './store.js', './profile.js', './features.js', './second-pass.js', './assets/icon.svg', './assets/icon-192.png', './assets/icon-512.png',
+  './', './index.html', './styles.css', './third-pass.css', './life-tools.css', './app-shell.css', './liquid-dock.css', './together-plus.css', './cloud-sync.css', './app.js', './config.js', './cloud-config.js',
+  './manifest.webmanifest', './menu-extra.js', './store.js', './profile.js', './features.js', './second-pass.js', './third-pass.js', './life-tools.js', './liquid-dock.js', './app-shell.js', './together-plus.js', './cloud-sync.js', './assets/icon.svg', './assets/icon-192.png', './assets/icon-512.png',
   './assets/dish-scallop.svg', './assets/dish-pasta.svg', './assets/dish-beef.svg',
   './assets/dish-soup.svg', './assets/dish-dessert.svg', './assets/dish-drink.svg', './assets/dish-custom.svg',
   './assets/photo-01.svg', './assets/photo-02.svg', './assets/photo-03.svg', './assets/photo-04.svg'

@@ -1,22 +1,24 @@
 {
-  "name": "OURS — A Little World for Two",
+  "name": "OURS — 两个人的私人生活 App",
   "short_name": "OURS",
-  "description": "记录两个人的回忆、愿望和一间只为我们营业的私人餐厅。",
+  "description": "记录回忆、安排计划、管理日常，也留住只属于两个人的细节。",
   "id": "./",
-  "start_url": "./",
+  "start_url": "./#/today",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#FAF6F0",
   "theme_color": "#FAF6F0",
   "lang": "zh-CN",
-  "categories": ["lifestyle", "food", "together"],
+  "categories": ["lifestyle", "productivity", "social"],
   "icons": [
     { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "shortcuts": [
-    { "name": "今晚菜单", "short_name": "菜单", "url": "./#menu", "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }] },
-    { "name": "我们的心愿", "short_name": "心愿", "url": "./#wishes", "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }] }
+    { "name": "添加一段回忆", "short_name": "添加回忆", "url": "./?shortcut=memory#/memories", "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "新建一次约会", "short_name": "新建约会", "url": "./?shortcut=event#/plans", "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "打开今天", "short_name": "今天", "url": "./#/today", "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "打开生活", "short_name": "生活", "url": "./#/life", "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }] }
   ]
 }

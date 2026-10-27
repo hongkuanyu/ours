@@ -94,7 +94,7 @@
     }
   }  function initPointerEffects() {
     const finePointer = window.matchMedia('(pointer: fine)').matches;
-    if (!finePointer) return;
+    if (!finePointer || reducedMotion) return;
 
     const dot = $('#cursorDot');
     const ring = $('#cursorRing');
@@ -119,11 +119,16 @@
       }
     });
 
+    let glowFrame = 0;
     document.addEventListener('pointermove', (event) => {
       pointerX = event.clientX;
       pointerY = event.clientY;
-      document.documentElement.style.setProperty('--mx', `${event.clientX}px`);
-      document.documentElement.style.setProperty('--my', `${event.clientY}px`);
+      if (glowFrame) return;
+      glowFrame = window.requestAnimationFrame(() => {
+        document.documentElement.style.setProperty('--mx', `${pointerX}px`);
+        document.documentElement.style.setProperty('--my', `${pointerY}px`);
+        glowFrame = 0;
+      });
     }, { passive: true });
 
     document.addEventListener('pointerover', (event) => {
@@ -152,16 +157,25 @@
 
     const hero = $('.hero');
     const stage = $('#heroStage');
+    let heroFrame = 0;
+    let heroX = 0;
+    let heroY = 0;
     hero.addEventListener('pointermove', (event) => {
       const rect = hero.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / rect.width - 0.5;
-      const y = (event.clientY - rect.top) / rect.height - 0.5;
-      stage.style.setProperty('--tilt-x', `${x * 8}deg`);
-      stage.style.setProperty('--tilt-y', `${y * -8}deg`);
-      stage.style.setProperty('--shift-x', `${x * 16}px`);
-      stage.style.setProperty('--shift-y', `${y * 16}px`);
+      heroX = (event.clientX - rect.left) / rect.width - 0.5;
+      heroY = (event.clientY - rect.top) / rect.height - 0.5;
+      if (heroFrame) return;
+      heroFrame = window.requestAnimationFrame(() => {
+        stage.style.setProperty('--tilt-x', `${heroX * 2.6}deg`);
+        stage.style.setProperty('--tilt-y', `${heroY * -2.6}deg`);
+        stage.style.setProperty('--shift-x', `${heroX * 6}px`);
+        stage.style.setProperty('--shift-y', `${heroY * 6}px`);
+        heroFrame = 0;
+      });
     });
     hero.addEventListener('pointerleave', () => {
+      if (heroFrame) window.cancelAnimationFrame(heroFrame);
+      heroFrame = 0;
       stage.style.setProperty('--tilt-x', '0deg');
       stage.style.setProperty('--tilt-y', '0deg');
       stage.style.setProperty('--shift-x', '0px');
@@ -173,15 +187,22 @@
     if (reducedMotion || !('IntersectionObserver' in window)) {
       revealElements.forEach((element) => element.classList.add('is-visible'));
     } else {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            observer.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
-      revealElements.forEach((element) => observer.observe(element));
+      try {
+        document.documentElement.classList.add('motion-ready');
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('is-visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.1, rootMargin: '0px 0px -4% 0px' });
+        revealElements.forEach((element) => observer.observe(element));
+        window.setTimeout(() => revealElements.filter((element) => element.getBoundingClientRect().top < window.innerHeight * 1.15).forEach((element) => element.classList.add('is-visible')), 1600);
+      } catch {
+        document.documentElement.classList.remove('motion-ready');
+        revealElements.forEach((element) => element.classList.add('is-visible'));
+      }
     }
 
     const progress = $('#scrollProgress');
@@ -193,11 +214,11 @@
       const max = document.documentElement.scrollHeight - window.innerHeight;
       progress.style.width = `${max > 0 ? (window.scrollY / max) * 100 : 0}%`;
       header.classList.toggle('is-scrolled', window.scrollY > 24);
-      if (window.scrollY > window.innerHeight * 0.72 || getCartCount() > 0) {
-        orderFab.classList.add('is-visible');
-      } else {
-        orderFab.classList.remove('is-visible');
-      }
+      const menuRect = $('#menu')?.getBoundingClientRect();
+      const menuInView = Boolean(menuRect && menuRect.top < window.innerHeight * 0.78 && menuRect.bottom > window.innerHeight * 0.18);
+      const cartHasItems = getCartCount() > 0;
+      const showFab = menuInView && (window.innerWidth > 600 || cartHasItems);
+      orderFab.classList.toggle('is-visible', showFab);
       ticking = false;
     };
 
@@ -214,12 +235,17 @@
     const toggle = $('#menuToggle');
     const menu = $('#mobileMenu');
     const setOpen = (open) => {
+      if (!open && menu.contains(document.activeElement)) toggle.focus({ preventScroll: true });
       document.body.classList.toggle('menu-open', open);
       toggle.setAttribute('aria-expanded', String(open));
       menu.setAttribute('aria-hidden', String(!open));
+      menu.inert = !open;
     };
     toggle.addEventListener('click', () => setOpen(!document.body.classList.contains('menu-open')));
-    $$('a', menu).forEach((link) => link.addEventListener('click', () => setOpen(false)));
+    $$('a, button', menu).forEach((item) => item.addEventListener('click', () => {
+      if (item.id !== 'openProfileMobile') setOpen(false);
+    }));
+    setOpen(false);
   }
   const CART_KEY = 'ours-supper-cart-v2';
   const LAST_ORDER_KEY = 'ours-supper-last-order-v2';

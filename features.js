@@ -115,6 +115,11 @@
   }
   let nextMeeting = store.getJSON('ours-next-meeting-v1', null);
 
+  function refreshNextMeeting() {
+    nextMeeting = store.getJSON('ours-next-meeting-v1', null);
+    renderNextMeeting();
+  }
+
   function renderNextMeeting() {
     const days = $('#nextMeetingDays');
     const label = $('#nextMeetingLabel');
@@ -164,6 +169,38 @@
   let dailyNotes = store.getJSON('ours-daily-notes-v1', []);
   if (!Array.isArray(dailyNotes)) dailyNotes = [];
 
+  const DIARY_DRAFT_KEY = 'ours-diary-drafts-v1';
+  let editingDailyNoteId = null;
+  let dailyDraftTimer = 0;
+
+  function clearDiaryDraftStatus() {
+    const status = $('#dailyDraftStatus');
+    if (status) status.textContent = '';
+  }
+
+  function writeDiaryDraft() {
+    const text = $('#dailyNoteInput').value;
+    const date = $('#dailyNoteEntryDate').value || todayISO();
+    const status = $('#dailyDraftStatus');
+    if (!text.trim()) {
+      store.setJSON(DIARY_DRAFT_KEY, []);
+      if (status) status.textContent = '';
+      return;
+    }
+    store.setJSON(DIARY_DRAFT_KEY, [{ date, text, updatedAt: new Date().toISOString() }]);
+    if (status) status.textContent = `草稿已自动保存 · ${new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  function restoreDiaryDraft() {
+    const drafts = store.getJSON(DIARY_DRAFT_KEY, []);
+    const draft = Array.isArray(drafts) ? drafts[0] : null;
+    if (!draft?.text) return;
+    $('#dailyNoteInput').value = draft.text;
+    $('#dailyNoteEntryDate').value = draft.date || todayISO();
+    const status = $('#dailyDraftStatus');
+    if (status) status.textContent = '已恢复上次未保存的草稿。';
+  }
+
   function renderDailyNotes() {
     const list = $('#dailyNotesList');
     if (!list) return;
@@ -173,36 +210,70 @@
       <article class="daily-note-item" data-note-id="${escapeHTML(note.id)}">
         <time datetime="${escapeHTML(note.date)}">${escapeHTML(note.date)}</time>
         <p>${escapeHTML(note.text)}</p>
-        <button type="button" aria-label="删除这条记录">×</button>
+        <div class="daily-note-actions"><button type="button" data-note-edit="${escapeHTML(note.id)}">编辑</button><button type="button" data-note-delete="${escapeHTML(note.id)}" aria-label="删除这条记录">×</button></div>
       </article>
     `).join('') : '<div class="shopping-empty">还没有写下今天的心里话。</div>';
   }
 
   function bindDailyNotes() {
     $('#dailyNoteEntryDate').value = todayISO();
+    restoreDiaryDraft();
+    $('#dailyNoteInput').addEventListener('input', () => {
+      const status = $('#dailyDraftStatus');
+      if (status) status.textContent = '正在保存草稿…';
+      window.clearTimeout(dailyDraftTimer);
+      dailyDraftTimer = window.setTimeout(writeDiaryDraft, 450);
+    });
     $('#dailyNoteForm').addEventListener('submit', (event) => {
       event.preventDefault();
       const text = $('#dailyNoteInput').value.trim();
       if (!text) return;
-      dailyNotes.push({ id: uid('note'), date: $('#dailyNoteEntryDate').value || todayISO(), text, createdAt: new Date().toISOString() });
+      const existing = dailyNotes.find((note) => note.id === editingDailyNoteId);
+      if (existing) {
+        existing.text = text;
+        existing.date = $('#dailyNoteEntryDate').value || todayISO();
+        existing.updatedAt = new Date().toISOString();
+      } else {
+        dailyNotes.push({ id: uid('note'), date: $('#dailyNoteEntryDate').value || todayISO(), text, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      }
       if (!store.setJSON('ours-daily-notes-v1', dailyNotes)) {
         toast('保存失败，请检查浏览器存储空间。');
         return;
       }
+      editingDailyNoteId = null;
+      store.setJSON(DIARY_DRAFT_KEY, []);
       $('#dailyNoteInput').value = '';
+      $('#dailyNoteEntryDate').value = todayISO();
+      $('#dailyNoteForm button[type="submit"]').innerHTML = '收进日记 <span>↗</span>';
+      const status = $('#dailyDraftStatus');
+      if (status) status.textContent = existing ? '日记已经更新。' : '今天的话已经收进日记。';
       renderDailyNotes();
-      toast('今天的话已经收进日记。');
-      sparkle(window.innerWidth - 80, window.innerHeight - 100);
+      document.dispatchEvent(new CustomEvent('ours:data-changed'));
+      toast(existing ? '日记已经更新。' : '今天的话已经收进日记。');
+      if (!existing) sparkle(window.innerWidth - 80, window.innerHeight - 100);
     });
     $('#dailyNotesList').addEventListener('click', (event) => {
       const item = event.target.closest('[data-note-id]');
-      if (!item || !event.target.closest('button')) return;
-      dailyNotes = dailyNotes.filter((note) => note.id !== item.dataset.noteId);
-      store.setJSON('ours-daily-notes-v1', dailyNotes);
-      renderDailyNotes();
+      if (!item) return;
+      const note = dailyNotes.find((entry) => entry.id === item.dataset.noteId);
+      if (!note) return;
+      if (event.target.closest('[data-note-edit]')) {
+        editingDailyNoteId = note.id;
+        $('#dailyNoteInput').value = note.text;
+        $('#dailyNoteEntryDate').value = note.date;
+        $('#dailyNoteForm button[type="submit"]').innerHTML = '更新日记 <span>↗</span>';
+        $('#dailyNoteInput').focus({ preventScroll: true });
+        return;
+      }
+      if (event.target.closest('[data-note-delete]')) {
+        if (!window.confirm('删除这篇日记？')) return;
+        dailyNotes = dailyNotes.filter((entry) => entry.id !== note.id);
+        store.setJSON('ours-daily-notes-v1', dailyNotes);
+        renderDailyNotes();
+        document.dispatchEvent(new CustomEvent('ours:data-changed'));
+      }
     });
   }
-
   const WISH_KEY = 'ours-supper-wishes-v2';
   let wishes = store.getJSON(WISH_KEY, null);
   if (!Array.isArray(wishes)) {
@@ -233,7 +304,7 @@
     list.innerHTML = wishes.map((wish) => `
       <div class="wish-item ${wish.done ? 'is-done' : ''}" data-wish-id="${escapeHTML(wish.id)}">
         <button type="button" aria-label="${wish.done ? '标记为未完成' : '标记为已完成'}"><span>✓</span></button>
-        <div><p>${escapeHTML(wish.title)}</p><div class="wish-meta">${wish.date ? `<time>${escapeHTML(wish.date)}</time>` : ''}${wish.note ? `<span>${escapeHTML(wish.note)}</span>` : ''}${wish.completedAt ? `<span>完成于 ${escapeHTML(wish.completedAt)}</span>` : ''}</div>${wish.done ? `<button class="wish-memory-button" type="button" data-wish-memory="${escapeHTML(wish.id)}">${wish.memoryId ? '查看纪念' : '留下纪念'}</button>` : ''}</div>
+        <div><p>${escapeHTML(wish.title)}</p><div class="wish-meta">${wish.date ? `<time>${escapeHTML(wish.date)}</time>` : ''}${wish.note ? `<span>${escapeHTML(wish.note)}</span>` : ''}${wish.completedAt ? `<span>完成于 ${escapeHTML(wish.completedAt)}</span>` : ''}</div>${wish.done ? `<button class="wish-memory-button" type="button" data-wish-memory="${escapeHTML(wish.id)}">${wish.memoryId ? '查看纪念' : '留下纪念'}</button>` : `<button class="wish-plan-button" type="button" data-wish-plan="${escapeHTML(wish.id)}">安排约会</button><button class="wish-plan-button" type="button" data-wish-todo="${escapeHTML(wish.id)}">加入待办</button>`}</div>
         <small>${wish.done ? 'DONE' : 'TO DO'}</small>
       </div>
     `).join('');
@@ -261,6 +332,16 @@
       if (!item || !event.target.closest('button')) return;
       const wish = wishes.find((entry) => entry.id === item.dataset.wishId);
       if (!wish) return;
+      const todoButton = event.target.closest('[data-wish-todo]');
+      if (todoButton) {
+        document.dispatchEvent(new CustomEvent('ours:add-todo-from-wish', { detail: { id: wish.id } }));
+        return;
+      }
+      const planButton = event.target.closest('[data-wish-plan]');
+      if (planButton) {
+        document.dispatchEvent(new CustomEvent('ours:plan-wish', { detail: { id: wish.id } }));
+        return;
+      }
       const memoryButton = event.target.closest('[data-wish-memory]');
       if (memoryButton) {
         if (wish.memoryId) openMemoryById(wish.memoryId);
@@ -279,6 +360,12 @@
       renderWishes();
       document.dispatchEvent(new CustomEvent('ours:data-changed'));
       if (wish.done) {
+        window.requestAnimationFrame(() => {
+          const updated = $(`[data-wish-id="${CSS.escape(wish.id)}"]`);
+          if (!updated) return;
+          updated.classList.add('is-just-completed');
+          window.setTimeout(() => updated.classList.remove('is-just-completed'), 700);
+        });
         sparkle(event.clientX, event.clientY);
         toast('又完成了一件想一起做的事。');
       }
@@ -303,7 +390,13 @@
   let editingMemoryDishId = null;
   let editingMemoryWishId = null;
   let editingMemoryCookingLogId = null;
+  let editingMemoryEventId = null;
   let pendingMemoryBlob = null;
+  let editingMemoryExtraPhotoIds = [];
+  let originalMemoryExtraPhotoIds = [];
+  let pendingExtraMemoryBlobs = [];
+  let memoryExtraPreviewUrls = [];
+  let activeMemoryPhotoUrls = [];
   let memoryPreviewObjectUrl = '';
   let memoryYear = '全部';
   let memoryView = 'wall';
@@ -323,19 +416,22 @@
     return Array.from(map.values()).sort((a, b) => String(b.date).localeCompare(String(a.date)));
   }
 
-  async function memoryImage(memory) {
-    if (memory.photoId) {
-      if (memoryObjectUrls.has(memory.photoId)) return memoryObjectUrls.get(memory.photoId);
-      try {
-        const blob = await store.getPhoto(memory.photoId);
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          memoryObjectUrls.set(memory.photoId, url);
-          return url;
-        }
-      } catch {}
+  async function memoryPhotoUrl(photoId) {
+    if (!photoId) return '';
+    if (memoryObjectUrls.has(photoId)) return memoryObjectUrls.get(photoId);
+    try {
+      const blob = await store.getPhoto(photoId);
+      if (!blob) return '';
+      const url = URL.createObjectURL(blob);
+      memoryObjectUrls.set(photoId, url);
+      return url;
+    } catch {
+      return '';
     }
-    return memory.src || 'assets/photo-01.svg';
+  }
+  async function memoryImage(memory) {
+    const photoUrl = memory.photoId ? await memoryPhotoUrl(memory.photoId) : '';
+    return photoUrl || memory.src || 'assets/photo-01.svg';
   }
 
   function compressMemoryImage(file) {
@@ -369,8 +465,8 @@
     const filter = $('#memoryYearFilter');
     const all = getAllMemories();
     const years = [...new Set(all.map((memory) => String(memory.date || '').slice(0, 4)).filter(Boolean))].sort().reverse();
-    filter.innerHTML = ['全部', ...years].map((year) => `<button type="button" data-year="${year}" class="${memoryYear === year ? 'is-active' : ''}">${year}</button>`).join('');
-    const filtered = memoryYear === '全部' ? all : all.filter((memory) => String(memory.date).startsWith(memoryYear));
+    filter.innerHTML = ['全部', '收藏', ...years].map((year) => `<button type="button" data-year="${year}" class="${memoryYear === year ? 'is-active' : ''}">${year}</button>`).join('');
+    const filtered = memoryYear === '收藏' ? all.filter((memory) => memory.favorite) : memoryYear === '全部' ? all : all.filter((memory) => String(memory.date).startsWith(memoryYear));
     visibleMemories = filtered;
     if (all.length) {
       const earliest = all[all.length - 1]?.date || '';
@@ -378,19 +474,22 @@
       $('#memoryDateRange').textContent = `${earliest.slice(0, 4)}—${latest.slice(0, 4)} · ${all.length} 个瞬间`;
     }
     if (!filtered.length) {
-      grid.innerHTML = '<div class="shopping-empty">这一年还没有照片，等你来放第一张。</div>';
+      grid.innerHTML = `<div class="shopping-empty">${memoryYear === '收藏' ? '还没有收藏的回忆。' : '这一年还没有照片，等你来放第一张。'}</div>`;
       return;
     }
     grid.classList.toggle('is-timeline', memoryView === 'timeline');
     const cards = await Promise.all(filtered.map(async (memory, index) => {
       const image = await memoryImage(memory);
+      const extraCount = Array.isArray(memory.photoIds) ? memory.photoIds.length : 0;
+      const badges = `${memory.favorite ? '<span class="memory-favorite">★</span>' : ''}${extraCount ? `<span class="memory-photo-count">+${extraCount}</span>` : ''}`;
+      const tagText = Array.isArray(memory.tags) && memory.tags.length ? `<div class="memory-tags">${memory.tags.map((tag) => `<span>#${escapeHTML(tag)}</span>`).join('')}</div>` : '';
       if (memoryView === 'timeline') {
-        return `<button class="timeline-memory" type="button" data-memory-id="${escapeHTML(memory.id)}"><img src="${escapeHTML(image)}" alt="${escapeHTML(memory.title)}" loading="lazy" /><span class="timeline-memory-copy"><time>${escapeHTML(memory.date)} · ${escapeHTML(memory.location || '没有写地点')}</time><strong>${escapeHTML(memory.title)}</strong><span>${escapeHTML(memory.text || '')}</span></span></button>`;
+        return `<button class="timeline-memory" type="button" data-memory-id="${escapeHTML(memory.id)}"><img src="${escapeHTML(image)}" alt="${escapeHTML(memory.title)}" loading="lazy" />${badges}<span class="timeline-memory-copy"><time>${escapeHTML(memory.date)} · ${escapeHTML(memory.location || '没有写地点')}</time><strong>${escapeHTML(memory.title)}</strong><span>${escapeHTML(memory.text || '')}</span>${tagText}</span></button>`;
       }
       return `
         <button class="memory-card is-visible" type="button" data-memory-id="${escapeHTML(memory.id)}" aria-label="打开回忆：${escapeHTML(memory.title)}">
-          <span class="memory-image"><img src="${escapeHTML(image)}" alt="${escapeHTML(memory.title)}" loading="lazy" /><i>${String(index + 1).padStart(2, '0')}</i></span>
-          <span class="memory-copy"><small>${escapeHTML(memory.date)} · ${escapeHTML(memory.location || '没有写地点')}</small><strong>${escapeHTML(memory.title)}</strong><span>${escapeHTML(memory.text || '')}</span><b>打开这一刻 ↗</b></span>
+          <span class="memory-image"><img src="${escapeHTML(image)}" alt="${escapeHTML(memory.title)}" loading="lazy" /><i>${String(index + 1).padStart(2, '0')}</i>${badges}</span>
+          <span class="memory-copy"><small>${escapeHTML(memory.date)} · ${escapeHTML(memory.location || '没有写地点')}</small><strong>${escapeHTML(memory.title)}</strong><span>${escapeHTML(memory.text || '')}</span>${tagText}<b>打开这一刻 ↗</b></span>
         </button>`;
     }));
     grid.innerHTML = cards.join('');
@@ -399,20 +498,28 @@
     const memory = visibleMemories.find((item) => item.id === id) || getAllMemories().find((item) => item.id === id);
     if (!memory) return;
     activeMemoryId = id;
-    $('#memoryModalImage').src = await memoryImage(memory);
+    const primaryImage = await memoryImage(memory);
+    const extraImages = (await Promise.all((Array.isArray(memory.photoIds) ? memory.photoIds : []).map(memoryPhotoUrl))).filter(Boolean);
+    activeMemoryPhotoUrls = [primaryImage, ...extraImages];
+    $('#memoryModalImage').src = primaryImage;
     $('#memoryModalImage').alt = memory.title;
-    $('#memoryModalMeta').textContent = `${memory.date} / ${memory.location || '没有写地点'}`;
+    const tags = Array.isArray(memory.tags) && memory.tags.length ? ` · ${memory.tags.map((tag) => `#${tag}`).join(' ')}` : '';
+    $('#memoryModalMeta').textContent = `${memory.date} / ${memory.location || '没有写地点'}${memory.favorite ? ' · 收藏' : ''}${tags}`;
     $('#memoryModalTitle').textContent = memory.title;
     $('#memoryModalText').textContent = memory.text || '';
+    const strip = $('#memoryPhotoStrip');
+    strip.hidden = activeMemoryPhotoUrls.length < 2;
+    strip.innerHTML = activeMemoryPhotoUrls.map((url, index) => `<button type="button" data-memory-photo-index="${index}" class="${index === 0 ? 'is-active' : ''}" aria-label="查看第 ${index + 1} 张照片"><img src="${escapeHTML(url)}" alt="" /></button>`).join('');
     $('#memoryPrev').disabled = visibleMemories.length < 2;
     $('#memoryNext').disabled = visibleMemories.length < 2;
     $('#memoryDishLink').hidden = !memory.dishId;
     $('#memoryDishLink').dataset.dishId = memory.dishId || '';
     $('#memoryWishLink').hidden = !memory.wishId;
     $('#memoryWishLink').dataset.wishId = memory.wishId || '';
+    $('#memoryEventLink').hidden = !memory.eventId;
+    $('#memoryEventLink').dataset.eventId = memory.eventId || '';
     openDialog($('#memoryLayer'), $('#memoryDialog'));
   }
-
   function stepMemory(direction) {
     if (!activeMemoryId || visibleMemories.length < 2) return;
     const index = visibleMemories.findIndex((memory) => memory.id === activeMemoryId);
@@ -420,13 +527,38 @@
     openMemoryById(visibleMemories[next].id);
   }
 
+  function clearPendingMemoryPreviewUrls() {
+    memoryExtraPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    memoryExtraPreviewUrls = [];
+  }
+
+  async function renderMemoryExtraPreview() {
+    const container = $('#memoryExtraPreview');
+    if (!container) return;
+    clearPendingMemoryPreviewUrls();
+    const previews = [];
+    for (const photoId of editingMemoryExtraPhotoIds) {
+      const url = await memoryPhotoUrl(photoId);
+      if (url) previews.push({ kind: 'stored', key: photoId, url });
+    }
+    pendingExtraMemoryBlobs.forEach((blob, index) => {
+      const url = URL.createObjectURL(blob);
+      memoryExtraPreviewUrls.push(url);
+      previews.push({ kind: 'pending', key: String(index), url });
+    });
+    container.innerHTML = previews.length ? previews.map((preview) => `<figure><img src="${escapeHTML(preview.url)}" alt="附加照片" /><button type="button" data-remove-extra-photo="${preview.kind}:${escapeHTML(preview.key)}" aria-label="移除这张照片">×</button></figure>`).join('') : '<small>还没有添加附加照片。</small>';
+  }
   async function openMemoryEditor(id = null, prefill = null) {
     const memory = id ? getAllMemories().find((item) => item.id === id) : null;
     editingMemoryId = memory?.id || null;
     editingMemoryDishId = memory?.dishId || prefill?.dishId || null;
     editingMemoryWishId = memory?.wishId || prefill?.wishId || null;
     editingMemoryCookingLogId = memory?.cookingLogId || prefill?.cookingLogId || null;
+    editingMemoryEventId = memory?.eventId || prefill?.eventId || null;
     pendingMemoryBlob = prefill?.photoBlob || null;
+    editingMemoryExtraPhotoIds = Array.isArray(memory?.photoIds) ? memory.photoIds.slice() : [];
+    originalMemoryExtraPhotoIds = editingMemoryExtraPhotoIds.slice();
+    pendingExtraMemoryBlobs = [];
     memoryDeleteArmed = false;
     window.clearTimeout(memoryDeleteTimer);
     $('#memoryEditorForm').reset();
@@ -435,6 +567,8 @@
     $('#memoryDate').value = memory?.date || prefill?.date || todayISO();
     $('#memoryLocation').value = memory?.location || prefill?.location || '';
     $('#memoryText').value = memory?.text || prefill?.text || '';
+    $('#memoryTags').value = Array.isArray(memory?.tags) ? memory.tags.join(', ') : '';
+    $('#memoryFavorite').checked = Boolean(memory?.favorite);
     if (memoryPreviewObjectUrl) URL.revokeObjectURL(memoryPreviewObjectUrl);
     memoryPreviewObjectUrl = '';
     if (pendingMemoryBlob) {
@@ -443,21 +577,27 @@
     } else {
       $('#memoryImagePreview').src = memory ? await memoryImage(memory) : 'assets/photo-01.svg';
     }
+    await renderMemoryExtraPreview();
     $('#deleteMemory').textContent = '删除';
     if (!$('#memoryLayer').hidden) closeDialog($('#memoryLayer'), $('#memoryDialog'));
     window.setTimeout(() => openDialog($('#memoryEditorLayer'), $('#memoryEditor')), reducedMotion ? 0 : 180);
   }
+
   function closeMemoryEditor() {
     closeDialog($('#memoryEditorLayer'), $('#memoryEditor'));
     if (memoryPreviewObjectUrl) URL.revokeObjectURL(memoryPreviewObjectUrl);
     memoryPreviewObjectUrl = '';
+    clearPendingMemoryPreviewUrls();
     editingMemoryId = null;
     editingMemoryDishId = null;
     editingMemoryWishId = null;
     editingMemoryCookingLogId = null;
+    editingMemoryEventId = null;
+    editingMemoryExtraPhotoIds = [];
+    originalMemoryExtraPhotoIds = [];
+    pendingExtraMemoryBlobs = [];
     pendingMemoryBlob = null;
   }
-
   async function saveMemory(event) {
     event.preventDefault();
     const title = $('#memoryTitle').value.trim();
@@ -475,16 +615,26 @@
     const memorySnapshot = memoryOverrides.slice();
     let createdPhotoId = '';
     let photoId = previousPhotoId;
-    if (pendingMemoryBlob) {
-      photoId = uid('photo');
-      createdPhotoId = photoId;
-      try {
+    const createdExtraPhotoIds = [];
+    try {
+      if (pendingMemoryBlob) {
+        photoId = uid('photo');
+        createdPhotoId = photoId;
         await store.putPhoto(photoId, pendingMemoryBlob);
-      } catch {
-        toast('照片保存失败，请换一张小一点的照片。');
-        return;
       }
+      for (const blob of pendingExtraMemoryBlobs) {
+        const extraPhotoId = uid('photo');
+        await store.putPhoto(extraPhotoId, blob);
+        createdExtraPhotoIds.push(extraPhotoId);
+      }
+    } catch {
+      if (createdPhotoId) store.deletePhoto(createdPhotoId).catch(() => {});
+      createdExtraPhotoIds.forEach((photo) => store.deletePhoto(photo).catch(() => {}));
+      toast('照片保存失败，请换一张小一点的照片。');
+      return;
     }
+    const extraPhotoIds = [...editingMemoryExtraPhotoIds, ...createdExtraPhotoIds];
+    const tags = $('#memoryTags').value.split(/[,，]/).map((tag) => tag.trim()).filter(Boolean).slice(0, 8);
     const record = {
       id,
       seed: Boolean(existing?.seed),
@@ -493,24 +643,23 @@
       location: $('#memoryLocation').value.trim(),
       text: $('#memoryText').value.trim(),
       photoId,
+      photoIds: extraPhotoIds,
+      tags,
+      favorite: $('#memoryFavorite').checked,
       src: photoId ? '' : (existing?.src || 'assets/photo-01.svg'),
       dishId: linkedDishId,
       wishId: linkedWishId,
       cookingLogId: linkedCookingLogId,
+      eventId: editingMemoryEventId || existing?.eventId || '',
       updatedAt: new Date().toISOString(),
     };
     memoryOverrides = memoryOverrides.filter((memory) => memory.id !== id).concat(record);
     if (!store.setJSON(MEMORY_KEY, memoryOverrides)) {
       memoryOverrides = memorySnapshot;
       if (createdPhotoId) store.deletePhoto(createdPhotoId).catch(() => {});
+      createdExtraPhotoIds.forEach((photo) => store.deletePhoto(photo).catch(() => {}));
       toast('回忆保存失败，可能是浏览器存储空间不足。');
       return;
-    }
-    if (previousPhotoId && previousPhotoId !== photoId) {
-      const cachedUrl = memoryObjectUrls.get(previousPhotoId);
-      if (cachedUrl) URL.revokeObjectURL(cachedUrl);
-      memoryObjectUrls.delete(previousPhotoId);
-      store.deletePhoto(previousPhotoId).catch(() => {});
     }
     if (linkedWishId) {
       const wish = wishes.find((entry) => entry.id === linkedWishId);
@@ -522,12 +671,25 @@
           memoryOverrides = memorySnapshot;
           store.setJSON(MEMORY_KEY, memorySnapshot);
           if (createdPhotoId) store.deletePhoto(createdPhotoId).catch(() => {});
+          createdExtraPhotoIds.forEach((photo) => store.deletePhoto(photo).catch(() => {}));
           toast('愿望纪念关联保存失败，请检查浏览器存储空间。');
           return;
         }
         renderWishes();
       }
     }
+    if (previousPhotoId && previousPhotoId !== photoId) {
+      const cachedUrl = memoryObjectUrls.get(previousPhotoId);
+      if (cachedUrl) URL.revokeObjectURL(cachedUrl);
+      memoryObjectUrls.delete(previousPhotoId);
+      store.deletePhoto(previousPhotoId).catch(() => {});
+    }
+    originalMemoryExtraPhotoIds.filter((photo) => !extraPhotoIds.includes(photo)).forEach((photo) => {
+      const cachedUrl = memoryObjectUrls.get(photo);
+      if (cachedUrl) URL.revokeObjectURL(cachedUrl);
+      memoryObjectUrls.delete(photo);
+      store.deletePhoto(photo).catch(() => {});
+    });
     closeMemoryEditor();
     await renderMemories();
     document.dispatchEvent(new CustomEvent('ours:data-changed'));
@@ -551,12 +713,12 @@
     memoryOverrides = memoryOverrides.filter((item) => item.id !== memory.id);
     memoryOverrides.push({ id: memory.id, deleted: true });
     store.setJSON(MEMORY_KEY, memoryOverrides);
-    if (memory.photoId) {
-      const objectUrl = memoryObjectUrls.get(memory.photoId);
+    [memory.photoId, ...(Array.isArray(memory.photoIds) ? memory.photoIds : [])].filter(Boolean).forEach((photoId) => {
+      const objectUrl = memoryObjectUrls.get(photoId);
       if (objectUrl) URL.revokeObjectURL(objectUrl);
-      memoryObjectUrls.delete(memory.photoId);
-      store.deletePhoto(memory.photoId).catch(() => {});
-    }
+      memoryObjectUrls.delete(photoId);
+      store.deletePhoto(photoId).catch(() => {});
+    });
     closeDialog($('#memoryLayer'), $('#memoryDialog'));
     activeMemoryId = null;
     renderMemories();
@@ -601,6 +763,39 @@
         preview.classList.remove('is-loading');
       }
     });
+    $('#addMemoryPhotos').addEventListener('click', () => $('#memoryImagesExtra').click());
+    $('#memoryImagesExtra').addEventListener('change', async (event) => {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+      const remaining = Math.max(0, 9 - editingMemoryExtraPhotoIds.length - pendingExtraMemoryBlobs.length);
+      for (const file of files.slice(0, remaining)) {
+        try {
+          pendingExtraMemoryBlobs.push(await compressMemoryImage(file));
+        } catch (error) {
+          toast(error.message || '附加照片处理失败。');
+        }
+      }
+      event.target.value = '';
+      await renderMemoryExtraPreview();
+    });
+    $('#memoryExtraPreview').addEventListener('click', async (event) => {
+      const remove = event.target.closest('[data-remove-extra-photo]');
+      if (!remove) return;
+      const [kind, key] = remove.dataset.removeExtraPhoto.split(':');
+      if (kind === 'stored') editingMemoryExtraPhotoIds = editingMemoryExtraPhotoIds.filter((photoId) => photoId !== key);
+      if (kind === 'pending') pendingExtraMemoryBlobs.splice(Number(key), 1);
+      await renderMemoryExtraPreview();
+    });
+    $('#memoryPhotoStrip').addEventListener('click', (event) => {
+      const button = event.target.closest('[data-memory-photo-index]');
+      if (!button) return;
+      const url = activeMemoryPhotoUrls[Number(button.dataset.memoryPhotoIndex)];
+      if (!url) return;
+      $('#memoryModalImage').src = url;
+      $$('#memoryPhotoStrip button').forEach((item) => item.classList.toggle('is-active', item === button));
+    });
+    $('#memoryBackdrop').addEventListener('click', () => closeDialog($('#memoryLayer'), $('#memoryDialog')));
+    $('#closeMemory').addEventListener('click', () => closeDialog($('#memoryLayer'), $('#memoryDialog')));
     $('#memoryEditorForm').addEventListener('submit', saveMemory);
     $('#closeMemoryEditor').addEventListener('click', closeMemoryEditor);
     $('#cancelMemoryEditor').addEventListener('click', closeMemoryEditor);
@@ -613,6 +808,12 @@
       if (!dishId) return;
       closeDialog($('#memoryLayer'), $('#memoryDialog'));
       window.setTimeout(() => window.OURS_APP?.openDish?.(dishId), reducedMotion ? 0 : 180);
+    });
+    $('#memoryEventLink').addEventListener('click', () => {
+      const eventId = $('#memoryEventLink').dataset.eventId;
+      if (!eventId) return;
+      closeDialog($('#memoryLayer'), $('#memoryDialog'));
+      document.dispatchEvent(new CustomEvent('ours:open-event', { detail: { id: eventId } }));
     });
     $('#memoryWishLink').addEventListener('click', () => {
       const wishId = $('#memoryWishLink').dataset.wishId;
@@ -784,66 +985,225 @@
     });
   }
   const SHOPPING_KEY = 'ours-shopping-v1';
+  const SHOPPING_CATEGORIES = ['蔬菜', '肉类', '蛋奶', '调味料', '主食', '其他'];
+  const UNIT_PATTERN = 'kg|g|克|千克|ml|l|毫升|升|个|颗|片|根|瓣|块|只|斤|两|勺|茶匙|汤匙|杯|碗|包|袋|盒|罐|把|份';
+  const CATEGORY_WORDS = {
+    蔬菜: ['番茄', '西红柿', '洋葱', '葱', '姜', '蒜', '土豆', '蘑菇', '菠菜', '生菜', '香菜', '罗勒', '柠檬', '橙', '苹果', '香蕉', '西兰花', '胡萝卜', '黄瓜', '南瓜', '芹', '椒', '菜'],
+    肉类: ['牛', '猪', '鸡', '鸭', '羊', '鱼', '虾', '扇贝', '培根', '火腿', '肉'],
+    蛋奶: ['蛋', '奶', '黄油', '芝士', '奶酪', '酸奶', '淡奶油'],
+    调味料: ['盐', '糖', '胡椒', '酱', '醋', '油', '料酒', '香料', '蜂蜜', '芥末', '咖喱', '辣椒粉', '生抽', '老抽'],
+    主食: ['米', '面', '粉', '面包', '吐司', '饺', '馒头', '燕麦', '意面', '米饭'],
+  };
+  const unitAliases = { '克': 'g', '千克': 'kg', '毫升': 'ml', '升': 'l' };
+  const compatibleUnits = {
+    g: { family: 'mass', factor: 1 }, kg: { family: 'mass', factor: 1000 },
+    ml: { family: 'volume', factor: 1 }, l: { family: 'volume', factor: 1000 },
+  };
   let shopping = store.getJSON(SHOPPING_KEY, []);
   if (!Array.isArray(shopping)) shopping = [];
 
-  function normalizeIngredient(raw) {
-    const parts = String(raw).trim().split(/\s+/);
-    return { name: parts.shift() || raw, amount: parts.join(' ') };
+  const shoppingCategory = (name, fallback = '其他') => {
+    const text = String(name || '');
+    const matched = Object.entries(CATEGORY_WORDS).find(([, words]) => words.some((word) => text.includes(word)));
+    return matched ? matched[0] : fallback;
+  };
+
+  const numericQuantity = (value) => {
+    if (String(value).includes('/')) {
+      const [top, bottom] = String(value).split('/').map(Number);
+      return bottom ? top / bottom : Number(top) || 0;
+    }
+    return Number(value) || 0;
+  };
+
+  const parseShoppingAmount = (raw, scale = 1, categoryHint = '') => {
+    const text = String(raw || '').replace(/^[\s•·*+\-]+/, '').trim();
+    const endMatch = text.match(new RegExp(`^(.*?)\\s*(\\d+(?:\\.\\d+)?(?:/\\d+)?)\\s*(${UNIT_PATTERN})\\s*$`, 'i'));
+    const startMatch = text.match(new RegExp(`^(\\d+(?:\\.\\d+)?(?:/\\d+)?)\\s*(${UNIT_PATTERN})\\s+(.+)$`, 'i'));
+    const vagueMatch = text.match(/^(.*?)\s*(少许|适量|若干)\s*$/);
+    if (endMatch) {
+      const quantity = numericQuantity(endMatch[2]) * scale;
+      return { name: endMatch[1].trim(), quantity: Number(quantity.toFixed(2)), unit: unitAliases[endMatch[3]] || endMatch[3], original: text, category: shoppingCategory(endMatch[1], categoryHint || '其他') };
+    }
+    if (startMatch) {
+      const quantity = numericQuantity(startMatch[1]) * scale;
+      return { name: startMatch[3].trim(), quantity: Number(quantity.toFixed(2)), unit: unitAliases[startMatch[2]] || startMatch[2], original: text, category: shoppingCategory(startMatch[3], categoryHint || '其他') };
+    }
+    if (vagueMatch) {
+      return { name: vagueMatch[1].trim(), quantity: '', unit: vagueMatch[2], original: text, category: shoppingCategory(vagueMatch[1], categoryHint || '其他') };
+    }
+    return { name: text, quantity: '', unit: '', original: text, category: shoppingCategory(text, categoryHint || '其他') };
+  };
+
+  function normalizeShoppingItem(item) {
+    if (!item || typeof item !== 'object') return null;
+    const parsed = item.name
+      ? { name: item.name, quantity: item.quantity ?? '', unit: item.unit || '', original: item.original || item.amount || '', category: SHOPPING_CATEGORIES.includes(item.category) ? item.category : shoppingCategory(item.name) }
+      : parseShoppingAmount(item.amount || item.name || '');
+    if (!parsed.name) return null;
+    return {
+      ...parsed,
+      id: item.id || uid('shop'),
+      checked: Boolean(item.checked),
+      manual: Boolean(item.manual),
+      sourceDishIds: Array.isArray(item.sourceDishIds) ? item.sourceDishIds : [],
+      updatedAt: item.updatedAt || new Date().toISOString(),
+    };
   }
 
-  function renderShopping() {
-    const list = $('#shoppingList');
-    $('#shoppingCount').textContent = String(shopping.filter((item) => !item.checked).length);
-    list.innerHTML = shopping.length ? shopping.map((item) => `
-      <div class="shopping-item ${item.checked ? 'is-checked' : ''}" data-shopping-id="${escapeHTML(item.id)}">
-        <button type="button" data-action="toggle" aria-label="切换购买状态">✓</button>
-        <span>${escapeHTML(item.name)}${item.amount ? ` · ${escapeHTML(item.amount)}` : ''}</span>
-        <button type="button" data-action="remove" aria-label="移除">×</button>
-      </div>`).join('') : '<div class="shopping-empty">清单还是空的。先选几道今晚想吃的菜吧。</div>';
-  }
+  shopping = shopping.map(normalizeShoppingItem).filter(Boolean);
 
   function saveShopping() {
     return store.setJSON(SHOPPING_KEY, shopping);
   }
-  function generateShoppingFromCart() {
-    const cart = window.OURS_APP?.getCart?.() || {};
-    const dishes = allDishes();
+  function shoppingProgress() {
+    const total = shopping.length;
+    const done = shopping.filter((item) => item.checked).length;
+    const progress = $('#shoppingProgress');
+    const bar = $('#shoppingProgressBar');
+    if (progress) progress.textContent = `${done} / ${total} 已买`;
+    if (bar) bar.style.width = `${total ? done / total * 100 : 0}%`;
+    const count = $('#shoppingCount');
+    if (count) count.textContent = String(total - done);
+  }
+
+  function renderShopping() {
+    const list = $('#shoppingList');
+    if (!list) return;
+    shoppingProgress();
+    if (!shopping.length) {
+      list.innerHTML = '<div class="shopping-empty">清单还是空的。可以从今晚的桌或本周菜单生成，也可以手动添加。</div>';
+      return;
+    }
+    const groups = SHOPPING_CATEGORIES.map((category) => ({
+      category,
+      items: shopping.filter((item) => (item.category || '其他') === category),
+    })).filter((group) => group.items.length);
+    list.innerHTML = groups.map((group) => `
+      <section class="shopping-group">
+        <h3>${escapeHTML(group.category)}<span>${group.items.filter((item) => item.checked).length}/${group.items.length}</span></h3>
+        ${group.items.map((item) => `
+          <div class="shopping-item ${item.checked ? 'is-checked' : ''}" data-shopping-id="${escapeHTML(item.id)}">
+            <button type="button" data-action="toggle" aria-label="切换购买状态">✓</button>
+            <div class="shopping-item-copy">
+              <strong>${escapeHTML(item.name)}</strong>
+              <div class="shopping-amount"><input data-shopping-field="quantity" inputmode="decimal" value="${escapeHTML(item.quantity ?? '')}" aria-label="${escapeHTML(item.name)}数量" placeholder="数量" /><input data-shopping-field="unit" value="${escapeHTML(item.unit || '')}" aria-label="${escapeHTML(item.name)}单位" placeholder="单位" /></div>
+              ${item.original && item.quantity === '' ? `<small>${escapeHTML(item.original)}</small>` : ''}
+            </div>
+            <button type="button" data-action="remove" aria-label="移除">×</button>
+          </div>`).join('')}
+      </section>`).join('');
+  }
+
+  function mergeShoppingIngredients(ingredients, previous = shopping) {
+    const previousByName = new Map(previous.map((item) => [item.name.trim().toLowerCase(), item]));
     const merged = new Map();
-    Object.entries(cart).forEach(([id, quantity]) => {
-      const dish = dishes.find((item) => item.id === id);
+    ingredients.forEach((item) => {
+      const key = item.name.trim().toLowerCase();
+      if (!key) return;
+      if (!merged.has(key)) {
+        merged.set(key, { ...item, sourceDishIds: [...new Set(item.sourceDishIds || [])], originals: new Set(item.original ? [item.original] : []) });
+        return;
+      }
+      const existing = merged.get(key);
+      const a = compatibleUnits[existing.unit];
+      const b = compatibleUnits[item.unit];
+      if (existing.quantity !== '' && item.quantity !== '' && ((a && b && a.family === b.family) || existing.unit === item.unit)) {
+        const existingValue = Number(existing.quantity) * (a?.factor || 1);
+        const incomingValue = Number(item.quantity) * (b?.factor || 1);
+        const baseUnit = a?.family === 'mass' ? 'g' : a?.family === 'volume' ? 'ml' : existing.unit;
+        const total = (existingValue + incomingValue) / (compatibleUnits[baseUnit]?.factor || 1);
+        existing.quantity = Number(total.toFixed(2));
+        existing.unit = baseUnit;
+      } else {
+        existing.quantity = '';
+        existing.unit = '';
+      }
+      (item.original ? [item.original] : []).forEach((value) => existing.originals.add(value));
+      existing.sourceDishIds.push(...(item.sourceDishIds || []));
+    });
+    return Array.from(merged.values()).map((item) => {
+      const previousItem = previousByName.get(item.name.trim().toLowerCase());
+      return {
+        id: previousItem?.id || uid('shop'),
+        name: item.name,
+        quantity: item.quantity,
+        unit: item.unit,
+        original: item.quantity === '' ? [...item.originals].join(' + ') : '',
+        category: item.category || shoppingCategory(item.name),
+        checked: previousItem?.checked || false,
+        manual: false,
+        sourceDishIds: [...new Set(item.sourceDishIds)],
+        updatedAt: new Date().toISOString(),
+      };
+    });
+  }
+
+  function generateShoppingFromSelections(selections) {
+    const dishes = allDishes();
+    const ingredients = [];
+    selections.forEach((selection) => {
+      if (selection?.ingredients) {
+        selection.ingredients.forEach((raw) => {
+          const parsed = parseShoppingAmount(raw, 1, selection.category);
+          parsed.sourceDishIds = [selection.id || 'temporary'];
+          ingredients.push(parsed);
+        });
+        return;
+      }
+      const dish = dishes.find((item) => item.id === selection.dishId);
       if (!dish) return;
+      const baseServings = Math.max(1, Number(String(dish.serves || '2').replace(/[^0-9.]/g, '')) || 2);
+      const servings = Math.max(1, Number(selection.servings) || baseServings);
       dish.ingredients.forEach((raw) => {
-        const parsed = normalizeIngredient(raw);
-        if (!merged.has(parsed.name)) merged.set(parsed.name, { name: parsed.name, amounts: new Set() });
-        if (parsed.amount) merged.get(parsed.name).amounts.add(parsed.amount);
+        const parsed = parseShoppingAmount(raw, servings / baseServings, SHOPPING_CATEGORIES.includes(dish.category) ? dish.category : '其他');
+        parsed.sourceDishIds = [dish.id];
+        ingredients.push(parsed);
       });
     });
-    const previous = new Map(shopping.map((item) => [item.name, item]));
-    shopping = Array.from(merged.values()).map((entry) => {
-      const old = previous.get(entry.name);
-      return { id: old?.id || uid('shop'), name: entry.name, amount: Array.from(entry.amounts).join(' + '), checked: old?.checked || false };
-    });
-    saveShopping();
+    const previousManual = shopping.filter((item) => item.manual);
+    const previousAutomatic = shopping.filter((item) => !item.manual);
+    shopping = [...previousManual, ...mergeShoppingIngredients(ingredients, previousAutomatic)];
+    if (!saveShopping()) {
+      toast('采购清单保存失败，请检查浏览器存储空间。');
+      return false;
+    }
     renderShopping();
-    toast(shopping.length ? '今晚的买菜清单已经生成。' : '今晚的桌还是空的。');
+    toast(`食材已经汇总，共 ${shopping.length} 项。`);
+    return true;
+  }
+
+  function generateShoppingFromCart() {
+    const cart = window.OURS_APP?.getCart?.() || {};
+    const selections = Object.entries(cart)
+      .filter(([, quantity]) => Number(quantity) > 0)
+      .map(([dishId, quantity]) => ({ dishId, servings: Number(quantity) * 2 }));
+    if (!selections.length) {
+      toast('今晚的桌还是空的。');
+      return;
+    }
+    generateShoppingFromSelections(selections);
   }
   function bindShopping() {
-    $('#openShopping').addEventListener('click', () => { renderShopping(); openDialog($('#shoppingLayer'), $('#shoppingDrawer')); });
-    $('#shoppingBackdrop').addEventListener('click', () => closeDialog($('#shoppingLayer'), $('#shoppingDrawer')));
-    $('#closeShopping').addEventListener('click', () => closeDialog($('#shoppingLayer'), $('#shoppingDrawer')));
-    $('#buildShoppingList').addEventListener('click', generateShoppingFromCart);
-    $('#shoppingForm').addEventListener('submit', (event) => {
+    $('#openShopping')?.addEventListener('click', () => { renderShopping(); openDialog($('#shoppingLayer'), $('#shoppingDrawer')); });
+    $('#shoppingBackdrop')?.addEventListener('click', () => closeDialog($('#shoppingLayer'), $('#shoppingDrawer')));
+    $('#closeShopping')?.addEventListener('click', () => closeDialog($('#shoppingLayer'), $('#shoppingDrawer')));
+    $('#buildShoppingList')?.addEventListener('click', generateShoppingFromCart);
+    $('#shoppingForm')?.addEventListener('submit', (event) => {
       event.preventDefault();
       const value = $('#shoppingInput').value.trim();
       if (!value) return;
-      const parsed = normalizeIngredient(value);
-      shopping.push({ id: uid('shop'), name: parsed.name, amount: parsed.amount, checked: false });
-      saveShopping();
+      const parsed = parseShoppingAmount(value);
+      shopping.push({ ...parsed, id: uid('shop'), checked: false, manual: true, sourceDishIds: [], updatedAt: new Date().toISOString() });
+      if (!saveShopping()) {
+        shopping.pop();
+        toast('采购项保存失败，请检查浏览器存储空间。');
+        return;
+      }
       $('#shoppingInput').value = '';
       renderShopping();
     });
-    $('#shoppingList').addEventListener('click', (event) => {
+    $('#shoppingList')?.addEventListener('click', (event) => {
       const item = event.target.closest('[data-shopping-id]');
       const action = event.target.closest('[data-action]');
       if (!item || !action) return;
@@ -851,18 +1211,47 @@
       if (!entry) return;
       if (action.dataset.action === 'toggle') entry.checked = !entry.checked;
       if (action.dataset.action === 'remove') shopping = shopping.filter((value) => value.id !== entry.id);
+      entry.updatedAt = new Date().toISOString();
       saveShopping();
       renderShopping();
-    });    $('#copyShopping').addEventListener('click', async () => {
-      const text = `OURS 买菜清单\n${shopping.map((item) => `□ ${item.name}${item.amount ? ` ${item.amount}` : ''}`).join('\n')}`;
+    });
+    $('#shoppingList')?.addEventListener('change', (event) => {
+      const field = event.target.closest('[data-shopping-field]');
+      const item = event.target.closest('[data-shopping-id]');
+      if (!field || !item) return;
+      const entry = shopping.find((value) => value.id === item.dataset.shoppingId);
+      if (!entry) return;
+      entry[field.dataset.shoppingField] = field.value.trim();
+      entry.original = entry.quantity === '' ? entry.name : '';
+      entry.updatedAt = new Date().toISOString();
+      saveShopping();
+      shoppingProgress();
+    });
+    $('#copyShopping')?.addEventListener('click', async () => {
+      const text = `OURS 买菜清单\n${shopping.map((item) => `${item.checked ? '✓' : '□'} ${item.name}${item.quantity !== '' ? ` ${item.quantity}${item.unit || ''}` : item.original ? ` ${item.original}` : ''}`).join('\n')}`;
       try { await navigator.clipboard.writeText(text); toast('买菜清单已复制。'); }
       catch { toast('复制失败，请手动选择文本。'); }
     });
-    $('#clearShopping').addEventListener('click', () => {
+    $('#shareShopping')?.addEventListener('click', async () => {
+      const text = `OURS 买菜清单\n${shopping.map((item) => `${item.checked ? '✓' : '□'} ${item.name}${item.quantity !== '' ? ` ${item.quantity}${item.unit || ''}` : ''}`).join('\n')}`;
+      if (navigator.share) {
+        try { await navigator.share({ title: 'OURS 买菜清单', text }); return; } catch (error) { if (error.name === 'AbortError') return; }
+      }
+      try { await navigator.clipboard.writeText(text); toast('清单已复制。'); } catch { toast('分享失败，请手动复制。'); }
+    });
+    $('#clearShopping')?.addEventListener('click', () => {
+      if (!shopping.length || !window.confirm('清空全部采购项？手动添加和已购买状态也会一起移除。')) return;
       shopping = [];
       saveShopping();
       renderShopping();
-      toast('买菜清单已清空。');
+      toast('采购清单已清空。');
+    });
+    $('#clearCompletedShopping')?.addEventListener('click', () => {
+      const removed = shopping.filter((item) => item.checked).length;
+      shopping = shopping.filter((item) => !item.checked);
+      saveShopping();
+      renderShopping();
+      toast(removed ? `已经清理 ${removed} 项已购买食材。` : '还没有已购买项目。');
     });
     renderShopping();
   }
@@ -887,9 +1276,9 @@
     $('#dateIdeaHint').textContent = currentDateIdea.hint;
     $('#saveDateIdea').disabled = false;
     $('#addDateIdeaWish').disabled = false;
+    if ($('#planDateIdea')) $('#planDateIdea').disabled = false;
     sparkle(window.innerWidth / 2, window.innerHeight / 2);
   }
-
   function bindDateIdea() {
     $('#drawDateIdea').addEventListener('click', drawDateIdea);
     $('#saveDateIdea').addEventListener('click', () => {
@@ -1027,13 +1416,20 @@
     $('#exportData').addEventListener('click', async () => {
       try {
         const payload = await store.exportData();
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const text = JSON.stringify(payload, null, 2);
+        const blob = new Blob([text], { type: 'application/json' });
+        const recordCount = Object.keys(payload.records || {}).length;
+        const photoCount = Object.keys(payload.photos || {}).length;
+        const sizeLabel = blob.size >= 1024 * 1024 ? `${(blob.size / 1024 / 1024).toFixed(2)} MB` : `${Math.max(1, Math.ceil(blob.size / 1024))} KB`;
+        if (!window.confirm(`将导出 ${recordCount} 类本地记录和 ${photoCount} 张照片，约 ${sizeLabel}。备份含私人内容，请只保存在可信设备。继续吗？`)) return;
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = `OURS-backup-${todayISO()}.json`;
         link.click();
         URL.revokeObjectURL(url);
+        store.markBackupExported?.(blob.size);
+        document.dispatchEvent(new CustomEvent('ours:data-changed'));
         toast('备份文件已经准备好。');
       } catch {
         toast('导出失败，请稍后再试。');
@@ -1043,14 +1439,18 @@
     $('#importDataFile').addEventListener('change', async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;
-      if (!window.confirm('导入会覆盖当前设备中的菜谱、回忆、愿望和私人照片。原有数据会先做回滚快照；确定继续吗？')) return;
       try {
         const payload = JSON.parse(await file.text());
+        const recordCount = Object.keys(payload.records || {}).length;
+        const photoCount = Object.keys(payload.photos || {}).length;
+        if (!window.confirm(`将覆盖导入 ${recordCount} 类记录和 ${photoCount} 张照片到当前设备。原有数据会先做回滚快照，确定继续吗？`)) return;
         await store.importData(payload);
         toast('备份已导入，正在重新打开。');
         window.setTimeout(() => location.reload(), 700);
       } catch (error) {
         toast(error.message || '这个备份文件无法读取。');
+      } finally {
+        event.target.value = '';
       }
     });
   }
@@ -1114,6 +1514,14 @@
     renderMemories,
     renderWishes,
     getWishes: () => wishes,
+    saveWishes,
+    refreshNextMeeting,
+    getShopping: () => shopping,
+    saveShopping,
+    renderShopping,
+    generateShoppingFromSelections,
+    generateShoppingFromCart,
+    getShoppingCategories: () => [...SHOPPING_CATEGORIES],
     renderCookingDashboard,
     decorateDishCards,
     openDialog,
@@ -1139,11 +1547,17 @@
   function recipePlatform(url) { const lower = String(url).toLowerCase(); if (lower.includes("douyin.com")) return "抖音"; if (lower.includes("iesdouyin.com")) return "抖音"; if (lower.includes("xiaohongshu.com")) return "小红书"; if (lower.includes("xhslink.com")) return "小红书"; return url ? "外部链接" : ""; }
   function cleanRecipeLine(line) { return String(line).replace(/^[\s>#*+\-•·]+/, "").replace(/^\d+[.、)]\s*/, "").replace(/#[^\s#]+/g, "").replace(/\s+/g, " ").trim(); }
   function guessRecipeTitle(text, url) {
-    const withoutUrl = String(text).replace(url, '').replace(/\s+/g, ' ').trim();
-    const brackets = [...withoutUrl.matchAll(/【([^】]{2,80})】/g)].map((match) => cleanRecipeLine(match[1]));
+    const withoutUrl = String(text).replace(url, '').trim();
+    const shareTitle = withoutUrl.match(/(?:分享|笔记|菜谱|作品)\s*[：:]\s*([^\r\n]{2,60})/);
+    if (shareTitle) {
+      const candidate = cleanRecipeLine(shareTitle[1]).replace(/[，,。！!].*$/, '').trim();
+      if (candidate.length >= 2 && !recipeNoise.test(candidate)) return candidate;
+    }
+    const flattened = withoutUrl.replace(/\s+/g, ' ').trim();
+    const brackets = [...flattened.matchAll(/【([^】]{2,80})】/g)].map((match) => cleanRecipeLine(match[1]));
     const goodBracket = brackets.find((value) => value.length >= 3 && !/的作品|的笔记|发布了/.test(value));
     if (goodBracket) return goodBracket;
-    const lines = withoutUrl.split(/[\r\n]+/).map(cleanRecipeLine).filter(Boolean);
+    const lines = flattened.split(/[\r\n]+/).map(cleanRecipeLine).filter(Boolean);
     const candidates = lines.filter((line) => line.length >= 3 && line.length <= 70 && !recipeNoise.test(line) && !startsWithAny(line, ingredientWords) && !startsWithAny(line, stepWords));
     candidates.sort((a, b) => b.length - a.length);
     return candidates[0] ? candidates[0] : '';
@@ -1165,6 +1579,12 @@
     if (hours) return hours[1] + ' HR';
     return '';
   }
+  function splitIngredientLine(value) {
+    const clean = cleanRecipeLine(value);
+    if (!clean) return [];
+    const parts = clean.split(/[、，,；;]\s*/).map((item) => item.trim()).filter((item) => item.length >= 2 && item.length <= 80);
+    return parts.length > 1 ? parts : [clean];
+  }
   function parseRecipeSections(text) {
     const expanded = String(text)
       .replace(/\r/g, '')
@@ -1177,11 +1597,12 @@
     rawLines.forEach((line) => {
       const clean = cleanRecipeLine(line);
       if (!clean) return;
+      if (/^https?:\/\//i.test(clean) || /^(?:链接|来源|原文)[：:]/.test(clean)) { mode = ''; return; }
       if (startsWithAny(clean, ingredientWords)) {
         mode = 'ingredient';
         const word = ingredientWords.find((entry) => clean.startsWith(entry));
         const rest = clean.slice(word.length).replace(/^[:：\s]+/, '').trim();
-        if (rest.length > 1) ingredients.push(rest);
+        if (rest.length > 1) ingredients.push(...splitIngredientLine(rest));
         return;
       }
       if (startsWithAny(clean, stepWords)) {
@@ -1192,12 +1613,12 @@
         return;
       }
       if (startsWithAny(clean, endWords)) { mode = ''; return; }
-      if (mode === 'ingredient' && clean.length <= 90 && !recipeNoise.test(clean)) ingredients.push(clean);
+      if (mode === 'ingredient' && clean.length <= 90 && !recipeNoise.test(clean)) ingredients.push(...splitIngredientLine(clean));
       if (mode === 'step' && clean.length >= 3 && !recipeNoise.test(clean)) steps.push(clean);
     });
     if (!ingredients.length) {
       rawLines.forEach((line) => {
-        if (/(\d+(?:\.\d+)?\s*(?:g|kg|ml|l|克|千克|毫升|勺|茶匙|杯|个|颗|片|根|瓣|块|只|斤|两))/.test(line)) ingredients.push(cleanRecipeLine(line));
+        if (/(\d+(?:\.\d+)?\s*(?:g|kg|ml|l|克|千克|毫升|勺|茶匙|杯|个|颗|片|根|瓣|块|只|斤|两))/.test(line)) ingredients.push(...splitIngredientLine(line));
       });
     }
     if (!steps.length) {

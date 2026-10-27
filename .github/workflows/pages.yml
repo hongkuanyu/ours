@@ -28,7 +28,7 @@ jobs:
       - name: Prepare static files
         run: |
           mkdir -p _site
-          cp index.html styles.css app.js config.js robots.txt .nojekyll manifest.webmanifest service-worker.js menu-extra.js store.js profile.js features.js second-pass.js _site/
+          cp index.html styles.css third-pass.css life-tools.css app-shell.css liquid-dock.css together-plus.css cloud-sync.css app.js config.js cloud-config.js robots.txt .nojekyll manifest.webmanifest service-worker.js menu-extra.js store.js profile.js features.js second-pass.js third-pass.js life-tools.js liquid-dock.js app-shell.js together-plus.js cloud-sync.js _site/
           cp -R assets _site/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

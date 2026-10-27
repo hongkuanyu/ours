@@ -598,7 +598,15 @@
           <p class="profile-note">这些设置只保存在当前浏览器，不会自动同步到她的手机。照片会压缩并存入本机 IndexedDB，也不会自动上传。</p>
           <button class="primary-button profile-save" type="submit">保存我们的小档案 <span>↗</span></button>
         </div>
-      </form>`;
+      </form>
+      <section class="profile-utilities" aria-label="应用与数据">
+        <div><span>把 OURS 带在身边</span><small>安装成 App，或备份这台设备里的私人记录。</small></div>
+        <div class="profile-utility-actions">
+          <button id="profileInstall" type="button">安装到手机</button>
+          <button id="profileExport" type="button">导出备份</button>
+          <button id="profileImport" type="button">导入备份</button>
+        </div>
+      </section>`;
     openLayer($('#profileLayer'), $('.profile-dialog'));
     if (profile.photoId) {
       try {
@@ -779,8 +787,15 @@
   function bindSecondPass() {
     $('#openProfile')?.addEventListener('click', openProfile);
     $('#openProfileMobile')?.addEventListener('click', () => {
-      if (document.body.classList.contains('menu-open')) $('#menuToggle')?.click();
-      openProfile();
+      if (document.body.classList.contains('menu-open')) {
+        $('#menuToggle')?.click();
+        window.setTimeout(() => {
+          $('#dockMore')?.focus({ preventScroll: true });
+          openProfile();
+        }, reducedMotion ? 0 : 90);
+      } else {
+        openProfile();
+      }
     });
     $('#closeProfile')?.addEventListener('click', closeProfile);
     $('#profileBackdrop')?.addEventListener('click', closeProfile);
@@ -805,6 +820,21 @@
       }
     });
     $('#profileBody')?.addEventListener('click', (event) => {
+      if (event.target.closest('#profileInstall')) {
+        closeProfile();
+        window.setTimeout(() => $('#installApp')?.click(), reducedMotion ? 0 : 340);
+        return;
+      }
+      if (event.target.closest('#profileExport')) {
+        closeProfile();
+        $('#exportData')?.click();
+        return;
+      }
+      if (event.target.closest('#profileImport')) {
+        closeProfile();
+        $('#importData')?.click();
+        return;
+      }
       if (!event.target.closest('#removeProfilePhoto')) return;
       profilePhotoBlob = null;
       profileRemovePhoto = true;

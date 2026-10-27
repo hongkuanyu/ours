@@ -3,20 +3,25 @@
   const DB_VERSION = 1;
   const PHOTO_STORE = 'photos';
   const SCHEMA_KEY = 'ours-schema-version';
-  const SCHEMA_VERSION = 3;
+  const SCHEMA_VERSION = 5;
   const MANAGED_KEYS = [
     'ours-supper-cart-v2', 'ours-supper-last-order-v2', 'ours-custom-dishes-v1',
     'ours-supper-wishes-v2', 'ours-supper-heart-v2', 'ours-memories-v1',
     'ours-cooking-v1', 'ours-shopping-v1', 'ours-next-meeting-v1',
     'ours-daily-notes-v1', 'ours-date-ideas-v1', 'ours-questions-v1',
-    'ours-quiz-results-v1', 'ours-profile-v1'
+    'ours-quiz-results-v1', 'ours-profile-v1', 'ours-events-v1',
+    'ours-reminders-v1', 'ours-weekly-menu-v1', 'ours-backup-meta-v1',
+    'ours-todos-v1', 'ours-gifts-v1', 'ours-preferences-v1', 'ours-diary-drafts-v1'
   ];
   const ARRAY_KEYS = new Set([
     'ours-custom-dishes-v1', 'ours-supper-wishes-v2', 'ours-memories-v1',
-    'ours-shopping-v1', 'ours-daily-notes-v1', 'ours-date-ideas-v1', 'ours-questions-v1'
+    'ours-shopping-v1', 'ours-daily-notes-v1', 'ours-date-ideas-v1', 'ours-questions-v1', 'ours-events-v1',
+    'ours-todos-v1', 'ours-gifts-v1', 'ours-preferences-v1', 'ours-diary-drafts-v1'
   ]);
+  const EMPTY_ARRAY_ON_EXPORT = new Set(['ours-todos-v1', 'ours-gifts-v1', 'ours-preferences-v1', 'ours-diary-drafts-v1']);
   const OBJECT_KEYS = new Set([
-    'ours-supper-cart-v2', 'ours-supper-last-order-v2', 'ours-cooking-v1', 'ours-profile-v1'
+    'ours-supper-cart-v2', 'ours-supper-last-order-v2', 'ours-cooking-v1', 'ours-profile-v1',
+    'ours-reminders-v1', 'ours-weekly-menu-v1', 'ours-backup-meta-v1'
   ]);
   const LIMITS = {
     backupBytes: 120 * 1024 * 1024,
@@ -147,7 +152,7 @@
   async function exportData() {
     const records = {};
     MANAGED_KEYS.forEach((key) => {
-      const value = localStorage.getItem(key);
+      const value = localStorage.getItem(key) ?? (EMPTY_ARRAY_ON_EXPORT.has(key) ? '[]' : null);
       if (value !== null) records[key] = value;
     });
     const photos = {};
@@ -184,7 +189,7 @@
 
   function validatePayload(payload) {
     if (!isPlainObject(payload) || payload.app !== 'OURS') throw new Error('这不是有效的 OURS 备份文件。');
-    if (![1, 2, SCHEMA_VERSION].includes(Number(payload.schemaVersion))) throw new Error('备份版本不受支持。');
+    if (![1, 2, 3, 4, SCHEMA_VERSION].includes(Number(payload.schemaVersion))) throw new Error('备份版本不受支持。');
     if (!isPlainObject(payload.records) || !isPlainObject(payload.photos)) throw new Error('备份结构不完整。');
     let size = 0;
     try { size = JSON.stringify(payload).length; } catch { throw new Error('备份文件无法读取。'); }
@@ -255,6 +260,13 @@
     }
   }
 
+  function markBackupExported(byteSize = 0) {
+    return setJSON('ours-backup-meta-v1', {
+      lastExportedAt: new Date().toISOString(),
+      lastExportBytes: Math.max(0, Number(byteSize) || 0),
+    });
+  }
+
   function migrate() {
     const current = Number(localStorage.getItem(SCHEMA_KEY) || 0);
     if (current < SCHEMA_VERSION) localStorage.setItem(SCHEMA_KEY, String(SCHEMA_VERSION));
@@ -263,6 +275,6 @@
 
   window.OURS_STORE = {
     getJSON, setJSON, putPhoto, getPhoto, deletePhoto, listPhotos,
-    exportData, importData, migrate, SCHEMA_VERSION,
+    exportData, importData, markBackupExported, migrate, SCHEMA_VERSION,
   };
 })();

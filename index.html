@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#FAF6F0" />
   <meta name="robots" content="noindex,nofollow" />
-  <meta name="description" content="OURS，一个记录两个人的回忆、愿望和私人餐厅的小世界。" />
+  <meta name="description" content="OURS，一个属于两个人的私人生活 App：记录回忆、安排计划、管理生活，也留住只属于彼此的细节。" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="OURS" />
@@ -14,16 +14,29 @@
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="third-pass.css" />
+  <link rel="stylesheet" href="life-tools.css" />
+  <link rel="stylesheet" href="app-shell.css" />
+  <link rel="stylesheet" href="liquid-dock.css" />
+  <link rel="stylesheet" href="together-plus.css" />
+  <link rel="stylesheet" href="cloud-sync.css" />
   <script src="config.js" defer></script>
+  <script src="cloud-config.js" defer></script>
   <script src="menu-extra.js" defer></script>
   <script src="store.js" defer></script>
   <script src="profile.js" defer></script>
   <script src="app.js" defer></script>
   <script src="features.js" defer></script>
   <script src="second-pass.js" defer></script>
+  <script src="third-pass.js" defer></script>
+  <script src="life-tools.js" defer></script>
+  <script src="liquid-dock.js" defer></script>
+  <script src="app-shell.js" defer></script>
+  <script src="together-plus.js" defer></script>
+  <script src="cloud-sync.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#menu">跳到今晚菜单</a>
+  <a class="skip-link" href="#/today">跳到主要内容</a>
   <div class="cursor cursor-dot" id="cursorDot" aria-hidden="true"></div>
   <div class="cursor cursor-ring" id="cursorRing" aria-hidden="true"></div>
   <div class="grain" aria-hidden="true"></div>
@@ -32,10 +45,11 @@
 
   <header class="site-header" id="siteHeader">
     <a class="brand magnetic" href="#home" aria-label="OURS 首页">
-      <span>OURS</span><small>A LITTLE WORLD FOR TWO</small>
+      <span>OURS</span><small>A LITTLE WORLD FOR TWO</small><span class="brand-section" id="brandSection" aria-hidden="true">首页</span>
     </a>
     <nav class="desktop-nav" aria-label="主导航">
       <a href="#home">首页</a>
+      <a href="#schedule">日程</a>
       <a href="#memories">回忆</a>
       <a href="#menu">私厨</a>
       <a href="#wishes">心愿</a>
@@ -44,6 +58,7 @@
     </nav>
     <div class="header-actions">
       <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false">SOUND <i></i></button>
+      <button class="data-pill" id="openSearch" type="button">搜索</button>
       <button class="data-pill" id="openProfile" type="button">设置</button>
       <button class="install-pill" id="installApp" type="button">安装 APP</button>
       <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span></button>
@@ -52,12 +67,14 @@
     <p>OUR LITTLE WORLD / 只开给两个人</p>
     <nav aria-label="移动端主导航">
       <a href="#home"><span>01</span>首页</a>
-      <a href="#memories"><span>02</span>我们的回忆</a>
-      <a href="#menu"><span>03</span>今晚私厨</a>
-      <a href="#wishes"><span>04</span>共同愿望</a>
-      <a href="#play"><span>05</span>一起玩</a>
-      <a href="#vault"><span>06</span>我们的秘密</a>
+      <a href="#schedule"><span>02</span>我们的日程</a>
+      <a href="#memories"><span>03</span>我们的回忆</a>
+      <a href="#menu"><span>04</span>今晚私厨</a>
+      <a href="#wishes"><span>05</span>共同愿望</a>
+      <a href="#play"><span>06</span>一起玩</a>
+      <a href="#vault"><span>07</span>我们的秘密</a>
     </nav>
+    <button class="mobile-settings" id="openSearchMobile" type="button">搜索全部回忆、菜谱与计划 ⌕</button>
     <button class="mobile-settings" id="openProfileMobile" type="button">设置我们的小档案 ↗</button>
 <small>OURS · SINCE 2025</small>
   </div>
@@ -141,6 +158,21 @@
 
     <section class="home-recent" id="recent" aria-label="我们的近期动态">
       <button class="on-this-day" id="onThisDayCard" type="button" hidden><span>那年今日</span><strong id="onThisDayText">去年的今天，我们……</strong><small>打开这段回忆 ↗</small></button>
+      <section class="today-week" id="todayWeek" aria-labelledby="todayWeekTitle">
+        <div class="today-week-head">
+          <div><span>OUR DAYS AHEAD</span><h2 id="todayWeekTitle">今日与本周</h2><small id="todayWeekDate">今天</small></div>
+          <button id="openRemindersFromHome" type="button">提醒中心 ↗</button>
+        </div>
+        <div class="quick-add-row" aria-label="快速添加">
+          <button type="button" data-quick-add="memory"><span>＋</span>回忆</button>
+          <button type="button" data-quick-add="event"><span>＋</span>约会</button>
+          <button type="button" data-quick-add="wish"><span>＋</span>愿望</button>
+          <button type="button" data-quick-add="recipe"><span>＋</span>菜谱</button>
+          <button type="button" data-quick-add="note"><span>＋</span>心里话</button>
+        </div>
+        <div class="today-week-grid" id="todayWeekGrid"></div>
+        <p class="backup-nudge" id="backupNudge" hidden></p>
+      </section>
       <div class="recent-heading"><div><span>OUR RECENT DAYS</span><small>只显示真实保存的记录</small></div><button id="openYearReview" type="button">年度回顾 ↗</button></div>
       <div class="recent-grid">
         <button class="recent-item" id="recentMemory" type="button"><span>最近的回忆</span><strong>还没有回忆</strong><small>去相册添加第一张照片</small></button>
@@ -148,6 +180,34 @@
         <button class="recent-item" id="recentWish" type="button"><span>最近完成的愿望</span><strong>还没有完成记录</strong><small>每完成一件事都值得留下</small></button>
       </div>
     </section>
+
+    <section class="section schedule-section" id="schedule">
+      <div class="section-index reveal"><span>01.5</span><i></i><small>OUR DAYS TOGETHER</small></div>
+      <div class="schedule-heading reveal">
+        <div><p class="kicker">把下一次见面，认真写下来</p><h2 class="display-title">计划见面的日子，<br /><em>也计划好好生活。</em></h2></div>
+        <div class="schedule-heading-actions">
+          <button class="primary-button" id="addEvent" type="button">安排一次约会 <span>↗</span></button>
+          <button class="text-button" id="openReminders" type="button">提醒中心 <span>◷</span></button>
+        </div>
+      </div>
+      <div class="schedule-toolbar reveal">
+        <div class="segmented-control" id="scheduleViewToggle">
+          <button class="is-active" data-schedule-view="calendar" type="button">日历</button>
+          <button data-schedule-view="list" type="button">列表</button>
+        </div>
+        <div class="schedule-date-nav">
+          <button id="schedulePrevMonth" type="button" aria-label="上个月">←</button>
+          <button id="scheduleToday" type="button">今天</button>
+          <strong id="calendarMonthLabel">本月</strong>
+          <button id="scheduleNextMonth" type="button" aria-label="下个月">→</button>
+        </div>
+        <label class="schedule-filter">状态<select id="scheduleStatusFilter"><option value="all">全部</option><option value="planned">待计划</option><option value="confirmed">已确认</option><option value="completed">已完成</option><option value="cancelled">已取消</option></select></label>
+        <button class="schedule-export" id="exportCalendarIcs" type="button">导出日历 .ics</button>
+      </div>
+      <div class="calendar-shell reveal" id="scheduleCalendar"></div>
+      <div class="schedule-list" id="scheduleList" hidden></div>
+    </section>
+
     <section class="section menu-section" id="menu">
       <div class="section-index reveal"><span>01</span><i></i><small>THE TASTING MENU</small></div>
       <div class="menu-heading">
@@ -173,6 +233,18 @@
         </div>
       </div>
       <div class="dish-grid" id="dishGrid"></div>
+      <section class="weekly-menu-card reveal" id="weeklyMenuCard">
+        <div class="weekly-menu-head">
+          <div><p class="kicker">PLAN THE WEEK</p><h3>本周菜单</h3><small id="weeklyMenuRange">周一至周日 · 午餐与晚餐</small></div>
+          <div class="weekly-menu-actions">
+            <button id="weeklyPrevWeek" type="button" aria-label="上一周">←</button>
+            <button id="generateWeeklyShopping" type="button">生成本周采购清单</button>
+            <button id="openTodayCooking" type="button">开始今天的菜</button>
+            <button id="weeklyNextWeek" type="button" aria-label="下一周">→</button>
+          </div>
+        </div>
+        <div class="weekly-menu-grid" id="weeklyMenuGrid"></div>
+      </section>
       <div class="chef-note reveal">
         <span class="chef-sign">O.</span>
         <p>“菜单不是规定。你突然想吃的，才是今晚真正的 special。”</p>
@@ -246,6 +318,7 @@
           <form class="daily-note-form reveal" id="dailyNoteForm">
             <label for="dailyNoteInput">写给今天的你</label>
             <textarea id="dailyNoteInput" rows="5" maxlength="240" placeholder="今天也很喜欢你，因为……" required></textarea>
+            <p class="daily-draft-status" id="dailyDraftStatus" role="status"></p>
             <div><input id="dailyNoteEntryDate" type="date" aria-label="记录日期" /><button class="primary-button" type="submit">收进日记 <span>↗</span></button></div>
           </form>
         </div>
@@ -289,6 +362,7 @@
           <div class="date-idea-actions">
             <button id="saveDateIdea" type="button" disabled>收藏灵感</button>
             <button id="addDateIdeaWish" type="button" disabled>加入共同愿望</button>
+            <button id="planDateIdea" type="button" disabled>安排进日程</button>
           </div>
         </article>
 
@@ -475,9 +549,11 @@
         <p id="memoryModalMeta">DATE / PLACE</p>
         <h2 id="memoryModalTitle">回忆标题</h2>
         <span id="memoryModalText"></span>
+        <div class="memory-photo-strip" id="memoryPhotoStrip" hidden></div>
         <div class="memory-detail-actions">
           <button id="memoryDishLink" type="button" hidden>回到关联菜谱</button>
           <button id="memoryWishLink" type="button" hidden>查看关联愿望</button>
+          <button id="memoryEventLink" type="button" hidden>查看关联日程</button>
           <button id="editMemory" type="button">编辑这段回忆</button>
           <button id="deleteMemory" type="button">删除</button>
         </div>
@@ -498,6 +574,9 @@
           <div class="memory-editor-image">
             <label class="image-upload" for="memoryImage"><img id="memoryImagePreview" src="assets/photo-01.svg" alt="回忆照片预览" /><span>选择一张照片</span></label>
             <input id="memoryImage" type="file" accept="image/*" hidden />
+            <input id="memoryImagesExtra" type="file" accept="image/*" multiple hidden />
+            <div class="memory-multi-actions"><button class="memory-add-photo" id="addMemoryPhotos" type="button">添加更多照片</button><small>第一张作为封面，其他照片会一起保存在 IndexedDB。</small></div>
+            <div class="memory-extra-preview" id="memoryExtraPreview"></div>
             <small>照片会压缩后保存在当前设备的 IndexedDB，不会自动上传到云端。</small>
           </div>
           <div class="memory-editor-fields">
@@ -507,6 +586,8 @@
               <label class="field">地点<input id="memoryLocation" maxlength="30" placeholder="在哪里" /></label>
             </div>
             <label class="field field-wide">那天发生了什么<textarea id="memoryText" rows="5" maxlength="400" placeholder="写下想记住的细节。"></textarea></label>
+            <label class="field field-wide">标签<input id="memoryTags" maxlength="100" placeholder="用逗号分隔，例如：旅行, 日落, 第一次" /></label>
+            <label class="field field-check"><input id="memoryFavorite" type="checkbox" /> 收藏这段回忆</label>
           </div>
         </div>
         <div class="editor-actions">
@@ -524,10 +605,12 @@
         <div><p>MARKET LIST / FOR TONIGHT</p><h2 id="shoppingTitle">买菜清单</h2></div>
         <button class="close-button" id="closeShopping" type="button" aria-label="关闭买菜清单">×</button>
       </header>
-      <p class="shopping-intro">从今晚的桌自动汇总，也可以随时手动补充。清单只保存在当前设备。</p>
+      <div class="shopping-progress-head"><span id="shoppingProgress">0 / 0 已买</span><i><b id="shoppingProgressBar"></b></i></div>
+      <p class="shopping-intro">相同食材会自动合并；无法可靠换算的数量会保留原文，不会猜测。清单只保存在当前设备。</p>
       <div class="shopping-lines" id="shoppingList"></div>
-      <form class="shopping-form" id="shoppingForm"><input id="shoppingInput" maxlength="50" placeholder="手动加一项，比如：新鲜迷迭香" required /><button type="submit">＋</button></form>
-      <div class="shopping-actions"><button id="copyShopping" type="button">复制清单</button><button id="clearShopping" type="button">清空清单</button></div>
+      <form class="shopping-form" id="shoppingForm"><input id="shoppingInput" maxlength="50" placeholder="手动加一项，比如：新鲜迷迭香 1 把" required /><button type="submit" aria-label="添加采购项">＋</button></form>
+      <div class="shopping-actions shopping-actions-main"><button id="copyShopping" type="button">复制清单</button><button id="shareShopping" type="button">分享清单</button><button id="clearCompletedShopping" type="button">清空已买</button></div>
+      <div class="shopping-actions shopping-actions-danger"><button id="clearShopping" type="button">清空全部</button></div>
     </aside>
   </div>
 
@@ -573,6 +656,98 @@
       <div class="year-review-body" id="yearReviewBody"></div>
     </section>
   </div>  <div class="modal-layer profile-layer" id="profileLayer" hidden><button class="modal-backdrop" id="profileBackdrop" type="button" aria-label="关闭设置"></button><section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profileTitle"><header><div><p>MAKE OURS YOURS</p><h2 id="profileTitle">我们的小档案</h2></div><button class="close-button" id="closeProfile" type="button" aria-label="关闭设置">×</button></header><div class="profile-body" id="profileBody"></div></section></div>
+  <div class="modal-layer event-editor-layer" id="eventEditorLayer" hidden>
+    <button class="modal-backdrop" id="eventEditorBackdrop" type="button" aria-label="关闭日程编辑器"></button>
+    <section class="event-editor" id="eventEditor" role="dialog" aria-modal="true" aria-labelledby="eventEditorTitle">
+      <header><div><p>OUR CALENDAR</p><h2 id="eventEditorTitle">安排一次约会</h2></div><button class="close-button" id="closeEventEditor" type="button" aria-label="关闭">×</button></header>
+      <form id="eventForm">
+        <input id="eventId" type="hidden" />
+        <input id="eventTodoId" type="hidden" />
+        <label class="field field-wide">标题<input id="eventTitle" maxlength="50" required placeholder="例如：周末去湖边野餐" /></label>
+        <div class="form-grid event-grid-3">
+          <label class="field">日期<input id="eventDate" type="date" required /></label>
+          <label class="field field-check"><input id="eventAllDay" type="checkbox" /> 全天</label>
+          <label class="field">状态<select id="eventStatus"><option value="planned">待计划</option><option value="confirmed">已确认</option><option value="completed">已完成</option><option value="cancelled">已取消</option></select></label>
+        </div>
+        <div class="form-grid event-grid-2" id="eventTimeFields">
+          <label class="field">开始时间<input id="eventStartTime" type="time" /></label>
+          <label class="field">结束时间<input id="eventEndTime" type="time" /></label>
+        </div>
+        <div class="form-grid event-grid-2">
+          <label class="field">地点名称<input id="eventPlaceName" maxlength="40" placeholder="例如：湖滨公园" /></label>
+          <label class="field">地址<input id="eventAddress" maxlength="100" placeholder="可复制到地图中打开" /></label>
+        </div>
+        <label class="field field-wide">备注<textarea id="eventNotes" rows="3" maxlength="300" placeholder="想一起做什么，或者需要记住什么。"></textarea></label>
+        <details class="event-advanced">
+          <summary>预算、准备事项与关联</summary>
+          <div class="event-advanced-body">
+            <div class="form-grid event-grid-2">
+              <label class="field">预算（¥）<input id="eventBudget" type="number" min="0" step="1" placeholder="可选" /></label>
+              <label class="field">实际花费（¥）<input id="eventActualCost" type="number" min="0" step="1" placeholder="可选" /></label>
+            </div>
+            <label class="field field-wide">准备事项<textarea id="eventPrepItems" rows="3" maxlength="400" placeholder="每行一项，例如：&#10;提前订票&#10;带相机&#10;买野餐垫"></textarea></label>
+            <div class="form-grid event-grid-2">
+              <label class="field">关联愿望<select id="eventWishSelect"><option value="">不关联</option></select></label>
+              <label class="field">提醒<select id="eventReminderDays"><option value="0">当天</option><option value="1">提前 1 天</option><option value="3">提前 3 天</option><option value="7">提前 7 天</option><option value="0,1">当天和提前 1 天</option><option value="0,1,3,7">当天和提前 1 / 3 / 7 天</option><option value="1,3,7">提前 1 / 3 / 7 天</option></select></label>
+            </div>
+          </div>
+        </details>
+        <p class="form-feedback" id="eventFormFeedback" role="status"></p>
+        <div class="editor-actions">
+          <button class="danger-button" id="deleteEvent" type="button" hidden>删除日程</button>
+          <span></span>
+          <button class="text-button" id="cancelEventEditor" type="button">取消</button>
+          <button class="primary-button" type="submit">保存日程 <span>↗</span></button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-layer reminders-layer" id="remindersLayer" hidden>
+    <button class="modal-backdrop" id="remindersBackdrop" type="button" aria-label="关闭提醒中心"></button>
+    <section class="reminders-dialog" role="dialog" aria-modal="true" aria-labelledby="remindersTitle">
+      <header><div><p>REMINDERS, NOT PRESSURE</p><h2 id="remindersTitle">提醒中心</h2></div><button class="close-button" id="closeReminders" type="button" aria-label="关闭">×</button></header>
+      <div class="reminders-body" id="remindersBody"></div>
+      <div class="reminders-actions"><button class="primary-button" id="exportRemindersIcs" type="button">导出到系统日历 <span>↗</span></button></div>
+    </section>
+  </div>
+
+  <div class="modal-layer search-layer" id="searchLayer" hidden>
+    <button class="modal-backdrop" id="searchBackdrop" type="button" aria-label="关闭搜索"></button>
+    <section class="search-dialog" role="dialog" aria-modal="true" aria-labelledby="searchTitle">
+      <header><div><p>SEARCH OUR LITTLE WORLD</p><h2 id="searchTitle">找到我们的记录</h2></div><button class="close-button" id="closeSearch" type="button" aria-label="关闭">×</button></header>
+      <div class="search-controls">
+        <input id="globalSearchInput" type="search" maxlength="80" autocomplete="off" placeholder="搜索回忆、菜谱、愿望、日程、心里话…" />
+        <div class="search-filter-row">
+          <label class="field">类型<select id="searchTypeFilter"><option value="all">全部</option><option value="memory">回忆</option><option value="dish">菜谱</option><option value="wish">愿望</option><option value="event">日程</option><option value="note">心里话</option><option value="cooking">做菜记录</option>
+              <option value="todo">待办</option><option value="gift">礼物</option><option value="preference">喜好</option></select></label>
+          <label class="field">从<input id="searchDateFrom" type="date" /></label>
+          <label class="field">到<input id="searchDateTo" type="date" /></label>
+          <label class="field">状态<input id="searchStatus" maxlength="20" placeholder="例如：已完成" /></label>
+        </div>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </section>
+  </div>
+
+  <div class="modal-layer weekly-slot-layer" id="weeklySlotLayer" hidden>
+    <button class="modal-backdrop" id="weeklySlotBackdrop" type="button" aria-label="关闭菜单安排"></button>
+    <section class="weekly-slot-dialog" role="dialog" aria-modal="true" aria-labelledby="weeklySlotTitle">
+      <header><div><p>PLAN A MEAL</p><h2 id="weeklySlotTitle">安排一餐</h2></div><button class="close-button" id="closeWeeklySlot" type="button" aria-label="关闭">×</button></header>
+      <form id="weeklySlotForm">
+        <input id="weeklySlotKey" type="hidden" />
+        <label class="field field-wide">选择菜谱<select id="weeklyDishSelect"></select></label>
+        <label class="field field-wide">或写下临时菜品<input id="weeklyTempDish" maxlength="40" placeholder="例如：楼下的小笼包" /></label>
+        <label class="field field-wide">临时菜品食材（每行一项）<textarea id="weeklyTempIngredients" rows="3" maxlength="300" placeholder="例如：&#10;小笼包 1 笼&#10;醋 少许"></textarea></label>
+        <div class="form-grid event-grid-2">
+          <label class="field">用餐人数<input id="weeklyServings" type="number" min="1" max="20" value="2" /></label>
+          <label class="field">备注<input id="weeklyMealNote" maxlength="60" placeholder="例如：少辣" /></label>
+        </div>
+        <p class="profile-note">选择现有菜谱后，采购清单会按人数换算已有数量，并合并相同食材。</p>
+        <div class="editor-actions"><button class="danger-button" id="removeWeeklySlot" type="button" hidden>移除这一餐</button><span></span><button class="text-button" id="cancelWeeklySlot" type="button">取消</button><button class="primary-button" type="submit">保存安排 <span>↗</span></button></div>
+      </form>
+    </section>
+  </div>
   <div class="install-layer" id="installLayer" hidden>
     <button class="modal-backdrop" id="installBackdrop" type="button" aria-label="关闭安装说明"></button>
     <section class="install-sheet" role="dialog" aria-modal="true" aria-labelledby="installTitle">
@@ -593,6 +768,7 @@
     <a href="#menu" data-section="menu"><span>⌘</span>私厨</a>
     <a href="#wishes" data-section="wishes"><span>✦</span>心愿</a>
     <a href="#play" data-section="play"><span>◇</span>一起玩</a>
+    <button class="dock-more" id="dockMore" type="button" aria-label="打开更多页面"><span>•••</span>更多</button>
   </nav>
 </body>
 </html>
