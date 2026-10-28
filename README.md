@@ -54,7 +54,8 @@
 - 减少动态模式会关闭光标跟随、视差、持续背景动画和大幅度位移
 - JavaScript 未能启动时，标题和核心内容仍保持可见，不会出现整屏透明
 - 新增页面与设置弹窗均支持 ESC、Tab 焦点循环、背景 inert 和焦点返回
-- Service Worker 当前版本为 `ours-supper-v26`
+- Service Worker 当前版本为 `ours-supper-v41`
+- PWA 图标采用用户提供的原创手绘粉猪插画，经过正方形适配、模板安全区与平台水印清理，提供 Any、Maskable、Apple Touch 与 32px favicon 版本
 
 ## App Shell 3.0（Phase 1）
 
@@ -203,7 +204,7 @@ python -m http.server 4192 --bind 127.0.0.1
 
 - 五页 Hash 路由、浏览器前进 / 返回、页面级滚动位置恢复和旧链接映射
 - Liquid Glass 底部导航、桌面侧边导航、快捷添加 Sheet、全局搜索与设置入口
-- PWA 快捷方式、Service Worker `ours-supper-v26` 离线缓存与更新提示
+- PWA 快捷方式、Service Worker `ours-supper-v41` 离线缓存与更新提示
 - 320×568、375×812、390×844、430×932、768×1024、1024×768、1440×900
 - iPhone 15 尺寸移动端触控模拟：五页导航、快捷添加、安全区与 58px 以上触控目标
 - 菜谱分享文案识别：菜名、3 种复合食材、3 个步骤、来源平台与链接清洗
@@ -225,14 +226,14 @@ python -m http.server 4192 --bind 127.0.0.1
 - 智能菜谱短链接限制、完整文案预览、覆盖前确认
 - 导出、损坏备份拒绝、有效备份往返
 - 弹窗 ESC、Tab 焦点循环、背景 inert、关闭后焦点恢复
-- PWA 离线打开、Service Worker `ours-supper-v26` 缓存
+- PWA 离线打开、Service Worker `ours-supper-v41` 缓存
 - Reduced Motion 下持续动画、光标跟随和视差均关闭
 
 Safari 的完整安装、系统分享面板、软键盘和真实 iPhone 安全区域仍需要在设备上复测。当前移动端测试是 iPhone 设备参数模拟，不等同于真实 iOS Safari；Android Chrome 真机、已安装 PWA 和真实 Supabase 双账号/RLS 也尚未验证。
 
 ## GitHub Pages
 
-推送到 `main` 后，`.github/workflows/pages.yml` 会自动发布。当前 Service Worker 缓存版本是 `ours-supper-v26`，应用外壳同时包含 `profile.js`、`second-pass.js`、`third-pass.css`、`third-pass.js`、`life-tools.css`、`life-tools.js`、`app-shell.css`、`app-shell.js`、`liquid-dock.css`、`liquid-dock.js`、`together-plus.css`、`together-plus.js`、`cloud-config.js`、`cloud-sync.css` 和 `cloud-sync.js`。
+推送到 `main` 后，`.github/workflows/pages.yml` 会自动发布。当前 Service Worker 缓存版本是 `ours-supper-v41`，应用外壳同时包含 `profile.js`、`second-pass.js`、`third-pass.css`、`third-pass.js`、`life-tools.css`、`life-tools.js`、`app-shell.css`、`app-shell.js`、`liquid-dock.css`、`liquid-dock.js`、`together-plus.css`、`together-plus.js`、`cloud-config.js`、`cloud-sync.css` 和 `cloud-sync.js`。
 
 更新脚本或样式后应继续提升 `service-worker.js` 中的缓存版本。已安装 PWA 重新打开时使用网络优先策略获取新版脚本；离线时回退到缓存。
 
