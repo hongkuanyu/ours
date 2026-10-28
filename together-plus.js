@@ -331,10 +331,56 @@
     }, 260);
   });
 
+  document.addEventListener('ours:focus-todo', (event) => {
+    const todoId = event.detail?.id;
+    if (!todoId) return;
+    todoFilter = 'all';
+    window.OURS_APP_SHELL?.navigate('plans', 'sharedTodos', { focus: false });
+    window.setTimeout(() => {
+      renderTodoModule();
+      const item = document.querySelector(`[data-todo-id="${CSS.escape(todoId)}"]`);
+      if (!item) { api.toast('这条待办已不存在，或当前账号没有访问权限。'); return; }
+      item.scrollIntoView({ behavior: reducedMotion.matches ? 'auto' : 'smooth', block: 'center' });
+      item.classList.add('is-search-target');
+      window.setTimeout(() => item.classList.remove('is-search-target'), 1800);
+    }, 320);
+  });
+
+  function reloadPlusCollections() {
+    todos = arrayData(TODOS_KEY).filter((item) => item && item.id && item.title).map((item) => ({
+      ...item,
+      status: item.status === 'done' ? 'done' : 'open',
+      priority: item.priority === 'important' ? 'important' : 'normal',
+      dueDate: item.dueDate || '',
+      notes: item.notes || '',
+      wishId: item.wishId || '',
+      createdAt: item.createdAt || new Date().toISOString(),
+      updatedAt: item.updatedAt || new Date().toISOString(),
+      completedAt: item.completedAt || '',
+    }));
+    gifts = arrayData(GIFTS_KEY).filter((item) => item && item.id && item.title).map((item) => ({
+      ...item,
+      forWhom: item.forWhom || 'her',
+      status: ['idea', 'planned', 'bought', 'given'].includes(item.status) ? item.status : 'idea',
+      budget: item.budget === '' || item.budget == null ? '' : Math.max(0, Number(item.budget) || 0),
+      updatedAt: item.updatedAt || new Date().toISOString(),
+    }));
+    preferences = arrayData(PREFERENCES_KEY).filter((item) => item && item.id && item.title).map((item) => ({
+      ...item,
+      person: item.person === 'me' ? 'me' : 'her',
+      type: item.type === 'dislike' ? 'dislike' : 'like',
+      category: item.category || '其他',
+      notes: item.notes || '',
+      updatedAt: item.updatedAt || new Date().toISOString(),
+    }));
+  }
+
   document.addEventListener('ours:data-changed', () => {
+    reloadPlusCollections();
     renderTodoModule();
     renderGifts();
     renderPreferences();
+    renderHomeTodos();
   });
   function safeLink(value) {
     try {

@@ -45,6 +45,7 @@
     us: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2s-7.4-4.2-7.4-10A4.1 4.1 0 0 1 12 7.4a4.1 4.1 0 0 1 7.4 2.8c0 5.8-7.4 10-7.4 10Z"/></svg>',
     plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
     search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.7" cy="10.7" r="6.1"/><path d="m15.3 15.3 4.1 4.1"/></svg>',
+    bell: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.7 9.7a5.3 5.3 0 0 1 10.6 0c0 6 2.1 6.4 2.1 7.6H4.6c0-1.2 2.1-1.6 2.1-7.6Z"/><path d="M9.6 19.1a2.8 2.8 0 0 0 4.8 0M12 3.1V2"/></svg>',
     settings: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.1 13.4a7.8 7.8 0 0 0 0-2.8l1.5-1.1-1.8-3.1-1.8.7a8 8 0 0 0-2.4-1.4L14.3 3h-4.6l-.3 2.7a8 8 0 0 0-2.4 1.4l-1.8-.7-1.8 3.1 1.5 1.1a7.8 7.8 0 0 0 0 2.8L3.4 14.5l1.8 3.1 1.8-.7a8 8 0 0 0 2.4 1.4l.3 2.7h4.6l.3-2.7a8 8 0 0 0 2.4-1.4l1.8.7 1.8-3.1-1.5-1.1Z"/></svg>',
     chevron: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>',
     plusCircle: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><path d="M12 8v8M8 12h8"/></svg>',
@@ -56,7 +57,7 @@
     { id: 'todo', label: '添加待办', detail: '记下一件想一起完成的小事', icon: ICONS.today },
     { id: 'wish', label: '添加愿望', detail: '想一起完成的一件小事', icon: ICONS.us },
     { id: 'recipe', label: '添加菜谱', detail: '记住想一起做的味道', icon: ICONS.life },
-    { id: 'note', label: '写心里话', detail: '只保存在这台设备的留言', icon: ICONS.today },
+    { id: 'note', label: '写心里话', detail: '把想说的话留给对方', icon: ICONS.today },
   ];
 
   const LEGACY_ALIASES = {
@@ -156,6 +157,7 @@
         <div class="app-topbar-actions">
           <button class="app-round-action app-quick-trigger" id="appQuickAdd" type="button" aria-label="快捷添加" aria-haspopup="dialog">${ICONS.plus}</button>
           <button class="app-round-action" id="appSearchButton" type="button" aria-label="全局搜索">${ICONS.search}</button>
+          <button class="app-round-action app-notification-trigger" id="appNotificationsButton" type="button" aria-label="通知" aria-haspopup="dialog">${ICONS.bell}<span class="app-notification-badge" id="appNotificationUnreadBadge" hidden></span></button>
           <button class="app-round-action" id="appSettingsButton" type="button" aria-label="设置与档案">${ICONS.settings}</button>
         </div>
       </header>

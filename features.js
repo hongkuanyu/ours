@@ -215,6 +215,19 @@
     `).join('') : '<div class="shopping-empty">还没有写下今天的心里话。</div>';
   }
 
+  document.addEventListener('ours:focus-note', (event) => {
+    const noteId = event.detail?.id;
+    if (!noteId) return;
+    window.OURS_APP_SHELL?.navigate('memories', 'daily', { focus: false });
+    window.setTimeout(() => {
+      const item = document.querySelector(`[data-note-id="${CSS.escape(noteId)}"]`);
+      if (!item) { toast('这条留言已不存在，或当前账号没有访问权限。'); return; }
+      item.scrollIntoView({ behavior: reducedMotion.matches ? 'auto' : 'smooth', block: 'center' });
+      item.classList.add('is-search-target');
+      window.setTimeout(() => item.classList.remove('is-search-target'), 1800);
+    }, 320);
+  });
+
   function bindDailyNotes() {
     $('#dailyNoteEntryDate').value = todayISO();
     restoreDiaryDraft();
@@ -1445,6 +1458,7 @@
         const photoCount = Object.keys(payload.photos || {}).length;
         if (!window.confirm(`将覆盖导入 ${recordCount} 类记录和 ${photoCount} 张照片到当前设备。原有数据会先做回滚快照，确定继续吗？`)) return;
         await store.importData(payload);
+        localStorage.setItem('ours-cloud-notify-guard-v1', '1');
         toast('备份已导入，正在重新打开。');
         window.setTimeout(() => location.reload(), 700);
       } catch (error) {
@@ -1467,6 +1481,18 @@
       if (section) observer.observe(section);
     });
   }
+
+  document.addEventListener('ours:data-changed', () => {
+    dailyNotes = store.getJSON('ours-daily-notes-v1', []);
+    if (!Array.isArray(dailyNotes)) dailyNotes = [];
+    const storedWishes = store.getJSON(WISH_KEY, null);
+    if (Array.isArray(storedWishes)) wishes = storedWishes;
+    memoryOverrides = store.getJSON(MEMORY_KEY, []);
+    if (!Array.isArray(memoryOverrides)) memoryOverrides = [];
+    renderDailyNotes();
+    renderWishes();
+    renderMemories();
+  });
 
   function bindFeatureKeyboard() {
     document.addEventListener('keydown', (event) => {

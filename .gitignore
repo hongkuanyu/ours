@@ -3,3 +3,7 @@ output/
 _site/
 .DS_Store
 Thumbs.db
+supabase/functions/**/.env.local
+supabase/functions/**/.env
+
+supabase/.local/

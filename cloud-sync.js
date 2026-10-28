@@ -11,6 +11,7 @@
   const conflictsKey = 'ours-cloud-conflicts-v1';
   const settingsKey = 'ours-cloud-settings-v1';
   const coupleKey = 'ours-cloud-couple-v1';
+  const notifyGuardKey = 'ours-cloud-notify-guard-v1';
   const configured = Boolean(String(config.url || '').match(/^https?:\/\//) && String(config.anonKey || '').length > 20);
   const configuredLocalhost = Boolean(String(config.url || '').match(/^http:\/\/(127\.0\.0\.1|localhost)/));
   const cloudEnabled = configured && (String(config.url).startsWith('https://') || configuredLocalhost);
@@ -46,6 +47,7 @@
   let conflicts = store?.getJSON(conflictsKey, {}) || {};
   let settings = store?.getJSON(settingsKey, { autoSync: true, syncEnabled: false }) || { autoSync: true, syncEnabled: false };
   if (typeof settings.syncEnabled !== 'boolean') settings.syncEnabled = false;
+  if (typeof settings.notificationBaselineReady !== 'boolean') settings.notificationBaselineReady = Boolean(syncMeta.lastSyncAt);
   let couple = store?.getJSON(coupleKey, null) || null;
   let applyingRemote = false;
   let remoteAppliedThisSync = false;
@@ -57,6 +59,31 @@
 
   function saveLocal(key, value) {
     return store?.setJSON(key, value) || false;
+  }
+
+  function userFacingCloudError(error) {
+    const message = String(error?.message || error || '操作失败');
+    if (/failed to fetch|networkerror|load failed|fetch failed|econnreset|connection reset/i.test(message)) {
+      return '无法连接 Supabase。请检查网络；受限网络可能需要 VPN 或可用的自定义域名。';
+    }
+    return message;
+  }
+
+  function emitCloudSessionChanged() {
+    window.dispatchEvent(new CustomEvent('ours:cloud-session-changed', {
+      detail: {
+        configured: cloudEnabled,
+        authenticated: Boolean(session?.access_token),
+        paired: Boolean(couple?.id),
+        user: session?.user || null,
+        couple: couple || null,
+      },
+    }));
+  }
+
+  function notificationsAllowedForQueue() {
+    if (!settings.notificationBaselineReady) return false;
+    return !localStorage.getItem(notifyGuardKey);
   }
 
   function baseUrl(path = '') {
@@ -140,6 +167,7 @@
     statusText = '已登录';
     await loadCouple();
     renderCloudPanel();
+    emitCloudSessionChanged();
   }
 
   async function signUp(email, password, displayName) {
@@ -152,6 +180,7 @@
     else registrationHint = payload?.user?.identities?.length === 0 ? '这个邮箱已经注册，请直接登录。' : '账号已创建，请检查邮箱并完成验证后登录。';
     await loadCouple();
     renderCloudPanel();
+    emitCloudSessionChanged();
   }
 
   async function signOut() {
@@ -161,6 +190,7 @@
     saveLocal(coupleKey, null);
     statusText = '已退出云端';
     renderCloudPanel();
+    emitCloudSessionChanged();
   }
 
   async function loadCouple() {
@@ -178,6 +208,7 @@
     couple = { id: row?.couple_id || row?.id, name: row?.name || name || '我们的双人空间' };
     saveLocal(coupleKey, couple);
     renderCloudPanel();
+    emitCloudSessionChanged();
     return couple;
   }
 
@@ -194,6 +225,7 @@
     couple = { id: row?.couple_id || row?.id, name: row?.name || '我们的双人空间' };
     saveLocal(coupleKey, couple);
     renderCloudPanel();
+    emitCloudSessionChanged();
     return couple;
   }
   function getMeta(key) {
@@ -231,6 +263,7 @@
       payload,
       raw,
       baseVersion: getMeta(key).version,
+      notify: notificationsAllowedForQueue(),
       createdAt: new Date().toISOString(),
     });
     saveLocal(queueKey, queue);
@@ -253,6 +286,7 @@
           p_payload: item.payload,
           p_base_version: item.baseVersion,
           p_mutation_id: item.mutationId,
+          p_notify: item.notify === true,
         });
         const row = Array.isArray(response) ? response[0] : response;
         if (row?.status === 'ok') {
@@ -395,10 +429,15 @@
       await syncPhotos();
       syncMeta.lastSyncAt = new Date().toISOString();
       saveLocal(syncMetaKey, syncMeta);
+      if (!settings.notificationBaselineReady) {
+        settings.notificationBaselineReady = true;
+        saveLocal(settingsKey, settings);
+      }
+      if (localStorage.getItem(notifyGuardKey)) localStorage.removeItem(notifyGuardKey);
       statusText = Object.keys(conflicts).length ? `发现 ${Object.keys(conflicts).length} 处冲突` : '已同步';
       if (remoteAppliedThisSync) document.dispatchEvent(new CustomEvent('ours:data-changed', { detail: { source: 'cloud' } }));
     } catch (error) {
-      lastError = error.message || '同步失败';
+      lastError = userFacingCloudError(error);
       statusText = '同步失败';
     } finally {
       syncing = false;
@@ -525,6 +564,7 @@
       if (action === 'enable-sync') {
         settings.syncEnabled = true;
         settings.autoSync = true;
+        settings.notificationBaselineReady = false;
         saveLocal(settingsKey, settings);
         statusText = '正在开启双向同步…';
         scanLocalChanges();
@@ -549,7 +589,7 @@
       const resolve = button.dataset.cloudResolve;
       if (resolve) { resolveConflict(button.dataset.cloudKey, resolve); return; }
     } catch (error) {
-      lastError = error.message || '操作失败';
+      lastError = userFacingCloudError(error);
       if (feedback) feedback.textContent = lastError;
       renderCloudPanel();
     }
@@ -592,6 +632,7 @@
     if (!session?.access_token) return;
     try { await loadCouple(); } catch (error) { lastError = error.message; }
     renderCloudPanel();
+    emitCloudSessionChanged();
     if (couple?.id && settings.syncEnabled && settings.autoSync !== false) window.setTimeout(() => syncNow(), 500);
   }
 
@@ -611,6 +652,16 @@
 
   window.OURS_CLOUD = {
     configured: cloudEnabled,
+    getAuth: () => ({
+      configured: cloudEnabled,
+      authenticated: Boolean(session?.access_token),
+      paired: Boolean(couple?.id),
+      user: session?.user || null,
+      couple: couple || null,
+      syncEnabled: Boolean(settings.syncEnabled),
+      notificationBaselineReady: Boolean(settings.notificationBaselineReady),
+    }),
+    rpc,
     signIn,
     signUp,
     signOut,

@@ -1012,6 +1012,10 @@ api.getAllMemories().filter((memory) => !memory.seed || memory.updatedAt).forEac
     bindSearch();
     renderAll();
     document.addEventListener('ours:data-changed', () => {
+      events = loadEvents();
+      reminderSettings = loadReminderSettings();
+      const storedMenu = store.getJSON(WEEKLY_MENU_KEY, null);
+      if (storedMenu && typeof storedMenu === 'object') weeklyMenu = storedMenu;
       syncEventMemoryLinks();
       renderSchedule();
       renderWeeklyMenu();
