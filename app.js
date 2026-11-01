@@ -1137,7 +1137,7 @@
   }
 
   function init() {
-    document.title = `OURS — 给${config.herName}`;
+    document.title = `OURS — ${config.myName || 'HKY'} × ${config.herName || 'HYJ'}`;
     updateDates();
     updateClock();
     renderMemories();

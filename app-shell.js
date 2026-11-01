@@ -3,6 +3,8 @@
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+  const pairLabel = [window.OURS_CONFIG?.myName, window.OURS_CONFIG?.herName].filter(Boolean).join(' × ') || 'HKY × HYJ';
 
   const ROUTES = {
     today: {
@@ -114,7 +116,6 @@
         { label: '编辑小档案', action: 'profile', primary: true },
         { label: '备份我们的世界', action: 'backup' },
         { label: '检查更新', action: 'check-update' },
-        { label: '云端同步', action: 'cloud' },
       ],
     },
   };
@@ -138,13 +139,13 @@
     <aside class="app-sidebar" aria-label="应用侧边导航">
       <a class="app-sidebar-brand" href="#/today" aria-label="OURS 今天">
         <span class="app-brand-mark">O.</span>
-        <span><strong>OURS</strong><small>A little world for two</small></span>
+        <span><strong>OURS</strong><small>${escapeHTML(pairLabel)}</small></span>
       </a>
       <div class="app-sidebar-date"><span id="appSidebarDate">今天</span><i></i></div>
       <nav class="app-rail-nav"></nav>
       <div class="app-sidebar-foot">
         <span class="app-mode-dot"></span>
-        <div><strong>Local mode</strong><small>数据只保存在这台设备</small></div>
+        <div><strong>${escapeHTML(pairLabel)}</strong><small>数据只保存在这台设备</small></div>
       </div>
     </aside>
     <div class="app-workspace">
@@ -157,7 +158,6 @@
         <div class="app-topbar-actions">
           <button class="app-round-action app-quick-trigger" id="appQuickAdd" type="button" aria-label="快捷添加" aria-haspopup="dialog">${ICONS.plus}</button>
           <button class="app-round-action" id="appSearchButton" type="button" aria-label="全局搜索">${ICONS.search}</button>
-          <button class="app-round-action app-notification-trigger" id="appNotificationsButton" type="button" aria-label="通知" aria-haspopup="dialog">${ICONS.bell}<span class="app-notification-badge" id="appNotificationUnreadBadge" hidden></span></button>
           <button class="app-round-action" id="appSettingsButton" type="button" aria-label="设置与档案">${ICONS.settings}</button>
         </div>
       </header>
@@ -508,7 +508,6 @@
       quiz: () => triggerExisting('#startQuiz'),
       'date-idea': () => triggerExisting('#drawDateIdea'),
       'check-update': () => checkForUpdate(),
-      cloud: () => navigate('us', 'cloudSync'),
     };
     actions[action]?.();
   }

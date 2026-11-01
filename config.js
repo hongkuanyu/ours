@@ -1,7 +1,9 @@
 window.OURS_CONFIG = {
-  relationshipStart: '2025-05-20',
-  herName: '亲爱的你',
-  birthday: { month: 12, day: 31, year: null },
+  myName: '宝宝',
+  herName: '宝宝',
+  coupleLabel: '宝宝 × 宝宝',
+  relationshipStart: '2026-10-20',
+  birthday: { month: 11, day: 25, year: 2007 },
   memories: [
     { src: 'assets/photo-01.svg', date: '2026.10.24', location: '太湖边', title: '第一个一起看星海的夜晚', text: '我们把一个普通的夜晚，留成了可以回看的地方。' },
     { src: 'assets/photo-02.svg', date: '2026.09.01', location: '旧街', title: '走了很远，但谁都没喊累', text: '那天没有目的地，只有并肩走路的声音。' },

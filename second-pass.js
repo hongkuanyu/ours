@@ -582,20 +582,21 @@
         </div>
         <div class="profile-fields">
           <div class="form-grid">
-            <label class="field">我的昵称<input id="profileMyName" maxlength="20" value="${escapeHTML(profile.myName || '')}" placeholder="例如：阿宇" /></label>
-            <label class="field">她的昵称<input id="profileHerName" maxlength="20" value="${escapeHTML(profile.herName || '')}" placeholder="例如：小猪" required /></label>
+            <label class="field">我的昵称<input id="profileMyName" maxlength="20" value="${escapeHTML(profile.myName || window.OURS_CONFIG?.myName || '')}" placeholder="${escapeHTML(window.OURS_CONFIG?.myName || '我的昵称')}" /></label>
+            <label class="field">她的昵称<input id="profileHerName" maxlength="20" value="${escapeHTML(profile.herName || window.OURS_CONFIG?.herName || '')}" placeholder="${escapeHTML(window.OURS_CONFIG?.herName || '她的昵称')}" required /></label>
           </div>
-          <label class="field">我们在一起的日期<input id="profileStart" type="date" value="${escapeHTML(profile.relationshipStart || '')}" required /></label>
+          <label class="field">我们在一起的日期<input id="profileStart" type="date" value="${escapeHTML(profile.relationshipStart || window.OURS_CONFIG?.relationshipStart || '')}" required /></label>
           <div class="form-grid">
-            <label class="field">她的生日月份<input id="profileBirthdayMonth" type="number" min="1" max="12" value="${escapeHTML(profile.birthdayMonth || '')}" required /></label>
-            <label class="field">生日日期<input id="profileBirthdayDay" type="number" min="1" max="31" value="${escapeHTML(profile.birthdayDay || '')}" required /></label>
+            <label class="field">她的生日月份<input id="profileBirthdayMonth" type="number" min="1" max="12" value="${escapeHTML(profile.birthdayMonth || window.OURS_CONFIG?.birthday?.month || '')}" required /></label>
+            <label class="field">生日日期<input id="profileBirthdayDay" type="number" min="1" max="31" value="${escapeHTML(profile.birthdayDay || window.OURS_CONFIG?.birthday?.day || '')}" required /></label>
+            <label class="field">出生年份（可选）<input id="profileBirthdayYear" type="number" min="1900" max="2200" value="${escapeHTML(profile.birthdayYear || window.OURS_CONFIG?.birthday?.year || '')}" placeholder="例如：2007" /></label>
           </div>
           <div class="form-grid">
             <label class="field">我们喜欢的颜色<input id="profileColor" type="color" value="${escapeHTML(profile.favoriteColor || '#722f42')}" /></label>
             <label class="field">下次见面<input id="profileNextMeeting" type="date" value="${escapeHTML(profile.nextMeeting || '')}" /></label>
           </div>
           <label class="field">封面照片说明<input id="profileHeroCaption" maxlength="40" value="${escapeHTML(profile.heroCaption || '')}" placeholder="例如：某个很普通的晚上" /></label>
-          <p class="profile-note">这些设置只保存在当前浏览器，不会自动同步到她的手机。照片会压缩并存入本机 IndexedDB，也不会自动上传。</p>
+          <p class="profile-note">这里不需要账号。资料、照片和记录只保存在当前设备；换设备时请使用备份导出与导入。</p>
           <button class="primary-button profile-save" type="submit">保存我们的小档案 <span>↗</span></button>
         </div>
       </form>
@@ -662,6 +663,7 @@
     const relationshipStart = $('#profileStart').value;
     const birthdayMonth = Number($('#profileBirthdayMonth').value);
     const birthdayDay = Number($('#profileBirthdayDay').value);
+    const birthdayYear = Number($('#profileBirthdayYear')?.value) || null;
     if (!herName || !relationshipStart) {
       toast('她的昵称和在一起日期都要填写。');
       return;
@@ -695,6 +697,7 @@
       relationshipStart,
       birthdayMonth,
       birthdayDay,
+      birthdayYear,
       favoriteColor,
       nextMeeting,
       heroCaption: $('#profileHeroCaption').value.trim(),

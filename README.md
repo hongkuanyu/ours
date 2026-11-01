@@ -27,9 +27,7 @@
 - 分组买菜清单：数量 / 单位合并、分类、进度、手动项目保留与分享
 - 全局搜索：回忆、菜谱、愿望、日程、心里话和做菜记录
 - 共同待办、礼物、喜好、多图回忆与日记增强
-- 可选双人云端空间：Supabase Auth、一次性邀请、RLS、私有照片、显式同步授权、离线队列和冲突选择；Local Mode 仍可直接使用
-- 双人动态通知中心：顶部铃铛、未读角标、已读/删除、分类偏好、安静时间、隐私预览与通知深链
-- Web Push 服务端链路：服务端事件识别、幂等/合并、私有订阅、VAPID Edge Function 与 Service Worker 系统通知
+- 宝宝 × 宝宝本地专属资料、无需账号，所有记录只保存在当前设备
 - PWA 安装、离线访问和网络优先脚本加载
 
 ## 最重要的一条体验链
@@ -56,7 +54,7 @@
 - 减少动态模式会关闭光标跟随、视差、持续背景动画和大幅度位移
 - JavaScript 未能启动时，标题和核心内容仍保持可见，不会出现整屏透明
 - 新增页面与设置弹窗均支持 ESC、Tab 焦点循环、背景 inert 和焦点返回
-- Service Worker 当前版本为 `ours-supper-v42`
+- Service Worker 当前版本为 `ours-supper-v43`
 - PWA 图标采用用户提供的原创手绘粉猪插画，经过正方形适配、模板安全区与平台水印清理，提供 Any、Maskable、Apple Touch 与 32px favicon 版本
 
 ## App Shell 3.0（Phase 1）
@@ -97,7 +95,6 @@
 - 全局搜索新增待办、礼物、喜好类型和对应筛选、结果定位
 - Schema 升级为 `5`，新增 `ours-todos-v1`、`ours-gifts-v1`、`ours-preferences-v1`、`ours-diary-drafts-v1`
 - 旧版备份 1–4 仍可导入；导入失败继续使用快照回滚
-- 双人云端客户端与数据库权限脚本已落地，但默认关闭；未配置真实 Supabase 前不会上传或读取私人云端数据，配置与验收步骤见 `docs/cloud-couple-mode.md`
 ## 实用功能升级（第一阶段）
 
 - 日程与提醒：`life-tools.js`、`life-tools.css`
@@ -133,7 +130,7 @@
 
 这些设置仅保存在当前浏览器，不会自动同步到另一台手机。首页主照片会压缩后写入本机 IndexedDB。
 
-默认扩展菜谱在 `menu-extra.js`。不要在公开仓库中放入身份证、住址、账号密码、私密联系方式或高风险隐私。项目里的 SVG 只是占位素材，不代表真实情侣照片。
+默认扩展菜谱在 `menu-extra.js`。无账号版本写入代码的资料会随 GitHub Pages 公开，因此身份证、住址、密码、私密联系方式或高风险隐私仍应只保存在本机；项目里的 SVG 是占位素材，真实照片请在本机设置中上传。
 
 ## 本地数据与备份
 
@@ -177,21 +174,17 @@ GitHub Pages 是公开静态托管。知道网址的人仍可访问公开页面�
 
 客户端加密不能替代账号授权、服务端权限和端到端加密。高风险内容不应仅依赖这个静态页面的情书暗号。
 
-## 可选双人云端空间
+## 无账号本地模式
 
-Local Mode 仍是无需登录即可使用的默认入口。当前工作区已接入 Supabase 项目和公开 publishable key；只有用户登录、加入双人空间并明确授权后，才会读取或上传云端私人数据。
+OURS 当前是纯本地版本：
 
-已实现的安全边界与流程：
+- 不要求注册、登录或绑定账号
+- 不加载 Supabase、Web Push、通知中心或任何账号脚本
+- 回忆、照片、菜谱、日记、日程和愿望保存在当前浏览器
+- 更换设备时使用「设置 → 导出备份 / 导入备份」迁移
+- 默认资料为「宝宝 × 宝宝」，在一起日期 2026-10-20，生日 11 月 25 日；这些资料和封面照片都可以在「设置」中直接修改
 
-- 两位成员分别使用邮箱与密码登录，通过一次性邀请码绑定唯一双人空间
-- 活跃成员上限为 2 人；邀请码 24 小时过期且只能使用一次
-- 数据表和私有 Storage Bucket 均启用 RLS，只允许该空间成员读取
-- 前端只允许公开 anon key；service role key 不得进入浏览器代码
-- 用户首次点击“确认并开启双向同步”后，才会读取云端数据或上传本机记录与照片
-- 离线修改进入本地队列；版本冲突必须明确选择“保留本机”或“使用云端”
-- Local Mode、本地备份和 IndexedDB 照片不依赖云端，可继续独立使用
-
-启用真实云端前，请严格按 `docs/cloud-couple-mode.md` 执行 SQL、配置 Supabase，并用两个独立账号验收 RLS、照片权限、冲突和账号撤销。Web Push 的数据库迁移、Edge Function、VAPID、Cron 和真机步骤见 `docs/web-push.md`。数据库迁移、VAPID Secrets、Edge Function 和 Cron 已部署并通过 Supabase 内部调用验证。当前 Windows 网络访问 `*.supabase.co` 会发生 TLS 重置，国外检测节点可正常访问；在受限网络中使用时需要 VPN 或可用的自定义域名。真机推送仍需最终验收。
+请只在自己的手机或电脑上使用私人记录，并定期导出备份。清理浏览器数据会同时清除本地内容。
 
 ## 本地运行与测试
 
@@ -206,14 +199,10 @@ python -m http.server 4192 --bind 127.0.0.1
 
 - 五页 Hash 路由、浏览器前进 / 返回、页面级滚动位置恢复和旧链接映射
 - Liquid Glass 底部导航、桌面侧边导航、快捷添加 Sheet、全局搜索与设置入口
-- PWA 快捷方式、Service Worker `ours-supper-v42` 离线缓存与更新提示
+- PWA 快捷方式、Service Worker `ours-supper-v43` 离线缓存与更新提示
 - 320×568、375×812、390×844、430×932、768×1024、1024×768、1440×900
 - iPhone 15 尺寸移动端触控模拟：五页导航、快捷添加、安全区与 58px 以上触控目标
 - 菜谱分享文案识别：菜名、3 种复合食材、3 个步骤、来源平台与链接清洗
-- 双人云端 mock 回归：登录、创建空间、邀请码、同步授权、两种冲突选择、离线队列、照片上传与恢复
-- 双人通知 mock 回归：首次同步静默、重复保存抑制、后续单次通知、未读角标、已读/删除、通知设置、Push Subscription、测试队列与记录深链
-- PostgreSQL WASM 服务端回归：RLS 建表、邀请修复、业务差分事件、双设备订阅、幂等、合并、类别关闭、安静时间、第三方隔离和移除撤权
-- Deno 2.9.6 Edge Function 类型检查、JSR/NPM 依赖解析、本地运行冒烟、VAPID JWT 与 aes128gcm 加密 POST 测试通过
 - 所有测试视口均无横向溢出
 - 320 / 375 / 390 / 430 首屏可见主操作；375 / 390 / 430 首屏可见关键日期
 - 移动端更多菜单、秘密入口、设置入口、六项底部导航和安全区域
@@ -231,14 +220,14 @@ python -m http.server 4192 --bind 127.0.0.1
 - 智能菜谱短链接限制、完整文案预览、覆盖前确认
 - 导出、损坏备份拒绝、有效备份往返
 - 弹窗 ESC、Tab 焦点循环、背景 inert、关闭后焦点恢复
-- PWA 离线打开、Service Worker `ours-supper-v42` 缓存
+- PWA 离线打开、Service Worker `ours-supper-v43` 缓存
 - Reduced Motion 下持续动画、光标跟随和视差均关闭
 
-Safari 的完整安装、系统分享面板、软键盘和真实 iPhone 安全区域仍需要在设备上复测。当前移动端测试是 iPhone 设备参数模拟，不等同于真实 iOS Safari；Android Chrome 真机、已安装 PWA、真实 Supabase 双账号/RLS、VAPID Edge Function 和系统推送也尚未验证。
+Safari 的完整安装、系统分享面板、软键盘和真实 iPhone 安全区域仍需要在设备上复测。当前移动端测试是 iPhone 设备参数模拟，不等同于真实 iOS Safari。
 
 ## GitHub Pages
 
-推送到 `main` 后，`.github/workflows/pages.yml` 会自动发布。当前 Service Worker 缓存版本是 `ours-supper-v42`，应用外壳同时包含 `profile.js`、`second-pass.js`、`third-pass.css`、`third-pass.js`、`life-tools.css`、`life-tools.js`、`app-shell.css`、`app-shell.js`、`liquid-dock.css`、`liquid-dock.js`、`together-plus.css`、`together-plus.js`、`cloud-config.js`、`cloud-sync.css`、`cloud-sync.js`、`notification-center.css` 和 `notification-center.js`。
+推送到 `main` 后，`.github/workflows/pages.yml` 会自动发布。当前 Service Worker 缓存版本是 `ours-supper-v43`，应用外壳只包含本地页面、业务模块、样式和图片资源。
 
 更新脚本或样式后应继续提升 `service-worker.js` 中的缓存版本。已安装 PWA 重新打开时使用网络优先策略获取新版脚本；离线时回退到缓存。
 
